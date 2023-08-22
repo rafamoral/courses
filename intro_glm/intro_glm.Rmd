@@ -18,14 +18,23 @@ fontsize: 0.1cm
 \footnotesize
 
 \begin{itemize}
-\item A recap on the general linear model
-\item Models for binary data
-\item Models for multinomial data
-\item Models for discrete proportions
-\item Models for count data
-\item Extensions: overdispersion models
-\item Extensions: zero-inflated models
+\item The normal model: A recap (bit of history on GLMs)
+\item Models for binary data (odds, odds ratio, logit link, deviance)
+\item Models for binomial data (probit, cloglog --end of day 1)
+\item Models for multinomial data (generalized logit model)
+\item Models for count data (Poisson, offset, hnp --end of day 2)
+\item Extensions: overdispersion models (quasi-Poisson, Negbin, quasi-binomial, betabinomial)
+\item Extensions: zero-inflated models (ZIP, ZINB, hurdle --end of day 3)
 \end{itemize}
+
+
+## The normal model: A recap
+
+
+
+
+
+
 
 ## \textit{Diaphorina citri} Mortality
 
