@@ -1,0 +1,18 @@
+\usepackage{ragged2e}
+\usepackage{indentfirst}
+\usepackage{tikz}
+\usepackage{color}
+\usepackage{multirow}
+
+\newcommand\Wider[2][3em]{%
+\makebox[\linewidth][c]{%
+  \begin{minipage}{\dimexpr\textwidth+#1\relax}
+  \raggedright#2
+  \end{minipage}%
+  }%
+}
+
+%\setlength{\tabcolsep}{2pt}
+\newcommand{\mt}{\multicolumn{1}{c}{$\times$}}
+
+\graphicspath{{./figures/}}

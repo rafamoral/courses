@@ -1,0 +1,191 @@
+---
+title: "Introduction to Generalized Linear Models"
+author: "Dr Rafael de Andrade Moral"
+date: "https://rafamoral.github.io"
+output:
+  beamer_presentation:
+    colortheme: orchid
+    fonttheme: professionalfonts
+    highlight: haddock
+    includes:
+      in_header: mystyle.tex
+    theme: Berlin
+fontsize: 0.1cm
+---
+
+## Outline
+
+\footnotesize
+
+\begin{itemize}
+\item The normal model: A recap
+\item Models for binary data (odds, odds ratio, logit link, deviance)
+\item Models for binomial data (probit, cloglog --end of day 1)
+\item Models for multinomial data (generalized logit model)
+\item Models for count data (Poisson, offset, hnp --end of day 2)
+\item Extensions: overdispersion models (quasi-Poisson, Negbin, quasi-binomial, betabinomial)
+\item Extensions: zero-inflated models (ZIP, ZINB, hurdle --end of day 3)
+\end{itemize}
+
+# The Normal Model: A Recap
+
+## The Normal Model: A Recap
+
+\small
+
+- $Y_i$ is a response variable associated with experimental or observational unit $i$
+- We *assume* it comes from a certain probability distribution with pmf/pdf $f$ and vector of parameters $\boldsymbol{\theta}$
+- In general, one of the parameters in $\boldsymbol{\theta}$ is the mean of the distribution
+- We also have predictors $x_i$ we are interested in studying
+- We may link it to a parameter of interest, typically the mean of the distribution
+
+## The Normal Model: A Recap
+
+\small
+
+- For the normal model, we typically write for each observation $y_i$: $$y_i=\beta_0+\beta_1x_{1i}+\cdots+\beta_px_{pi}+\varepsilon_i$$ where $\varepsilon_i\sim\mbox{N}(0,\sigma^2)$
+- Each $\beta$ coefficient represents the expected mean change in $y$ for a 1-unit increase in its associated predictor
+- We can show that, from the equation above, the expected value of $Y_i$ is $$\mbox{E}[Y_i]=\beta_0+\beta_1x_{1i}+\cdots+\beta_px_{pi}$$ and the variance is $$\mbox{Var}(Y_i)=\sigma^2$$
+- Therefore, we are assuming the variance is constant
+
+## The Normal Model: A Recap
+
+- The error notation has its advantages...
+- However, let's switch things up a bit
+
+## Statistical Modelling
+
+\LARGE
+
+What is Statistical Modelling?
+
+## Statistical Modelling
+
+\LARGE
+
+What is a Statistical Model?
+
+## Statistical Modelling
+
+\LARGE
+
+It's all about Probability!
+
+## Statistical Modelling
+
+Building blocks
+
+\begin{enumerate}
+\item Response variable ($Y$)
+\item Probability distribution
+\item Parameters of interest \pause $\leftarrow$ covariates / predictors
+\end{enumerate}
+
+## Statistical Modelling
+
+\small
+
+- $Y_i$ is a response variable associated with experimental or observational unit $i$
+- We *assume* it comes from a certain probability distribution with pmf/pdf $f$ and vector of parameters $\boldsymbol{\theta}$
+- Very often one of the parameters in $\boldsymbol{\theta}$ is the mean of the distribution (or a function of the mean)
+  - e.g.$^1$ for the normal distribution, $\boldsymbol{\theta}=(\mu,\sigma^2)^\top,$ where $\mu$ is the mean of the distribution
+  - e.g.$^2$ for the Poisson distribution, $\boldsymbol{\theta}=\mu,$ where $\mu$ is the mean of the distribution
+- We also have predictors $x_i$ we are interested in studying
+- We may link these predictors to any parameter of interest, but we typically do it for the **mean**
+
+## Statistical Modelling
+
+\footnotesize
+
+Example
+
+\centering
+\includegraphics[width = .6\textwidth]{ex1.png}
+
+## Statistical Modelling
+
+\footnotesize
+
+Example
+
+\begin{eqnarray*}
+Y_i & \sim & \mbox{N}(\mu_i, \sigma^2) \\
+\mu_i & = & \beta_0 + \beta_1x_i
+\end{eqnarray*}
+
+\pause
+
+What about
+
+- normality of residuals?
+- homogeneity of variances?
+
+This *only* makes sense for the model above!
+
+## Statistical Modelling
+
+\footnotesize
+
+What if you had
+
+\centering
+\includegraphics[width = .6\textwidth]{ex2.png}
+
+## Statistical Modelling
+
+\footnotesize
+
+Maybe then you'd assume
+
+\begin{eqnarray*}
+Y_i & \sim & \mbox{N}(\mu_i, \sigma^2_i) \\
+\mu_i & = & \beta_0 + \beta_1x_i \\
+\log\sigma^2_i & = & \gamma_0 + \gamma_1x_i
+\end{eqnarray*}
+
+No homogeneity of variances here!
+
+## Statistical Modelling
+
+\LARGE
+
+$Y$ can be assumed to have *any* distribution
+
+\pause
+
+Why is the normal distribution used to often then?
+
+## A Brief History of GLMs
+
+\footnotesize
+
+- Multiple linear regression: a normal model with the identity link (Legendre, Gauss, Galton, 19th century)
+- Analysis of variance (ANOVA): a normal model with the identity link (Fisher, 1918)
+- Analysis of dilution assays: a binomial model with the complementary log-log link (Fisher, 1922)
+- The exponential family class of distributions (Fisher, 1934)
+- Probit analysis: a binomial distribution with the probit link (Bliss, 1935)
+- Logistic regression: a binomial distribution with the logit link (Berkson, 1944; Dyke and Patterson, 1952)
+- Item analysis: a Bernoulli distribution with the logit link (Rasch, 1960)
+- Log-linear models: a Poisson distribution with the log link (Birch, 1963)
+- Regression for survival data: an exponential distribution with the inverse or log links (Feigl and Zelen, 1965; Zippin and Armitage, 1966; Gasser, 1967)
+- Inverse polynomials: a gamma distribution with the inverse link (Nelder, 1966)
+
+## A Brief History of GLMs
+
+\begin{center}
+
+\includegraphics[width = .8\textwidth]{nelder_wedderburn.png}
+
+\end{center}
+
+## A Brief History of GLMs
+
+\begin{center}
+
+\includegraphics[width = .45\textwidth]{mccullagh_nelder.jpg}
+
+\end{center}
+
+# Models for Binary Data
+
+## Models for Binary Data
