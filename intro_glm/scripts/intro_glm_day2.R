@@ -72,3 +72,9 @@ x %>%
   geom_point(size = 1) +
   geom_segment(aes(x = x, xend = x, y = 0, yend = `P(x)`), lwd = .3) +
   facet_wrap(~ distribution)
+
+## loading number of GP visits dataset
+doctor_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_glm/data/doctor.csv")
+doctor_df
+
+
