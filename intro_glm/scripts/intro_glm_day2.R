@@ -47,3 +47,28 @@ newdata %>%
   ylim(0, 1)
 
 ## The Poisson GLM -------------------------------------------------------------
+
+x <- tibble(x = 0:20,
+            `P(x)` = dpois(x, 3.5))
+
+x %>%
+  ggplot(aes(x = x, y = `P(x)`)) +
+  theme_bw() +
+  geom_point(size = 1) +
+  geom_segment(aes(x = x, xend = x, y = 0, yend = `P(x)`), lwd = .3) +
+  ggtitle("Y ~ Poisson(3.5)")
+
+## binomial approximation
+x <- tibble(x = 0:25,
+            Poisson = dpois(x, 0.0075 * 1000),
+            Binomial = dbinom(x, 1000, 0.0075))
+
+x %>%
+  pivot_longer(2:3,
+               names_to = "distribution",
+               values_to = "P(x)") %>%
+  ggplot(aes(x = x, y = `P(x)`)) +
+  theme_bw() +
+  geom_point(size = 1) +
+  geom_segment(aes(x = x, xend = x, y = 0, yend = `P(x)`), lwd = .3) +
+  facet_wrap(~ distribution)
