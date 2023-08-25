@@ -170,3 +170,187 @@ drop1(fit5, test = 'Chisq')
 summary(fit5)
 
 ## The Binomial GLM ------------------------------------------------------------
+
+## loading the citrus psyllid mortality data
+library(hnp)
+data(fungi)
+
+fungi$species <- relevel(fungi$species, "beauveria")
+
+fungi %>%
+  ggplot(aes(x = lconc, y = y/20, colour = species)) +
+  theme_bw() +
+  geom_point() +
+  ylab("proportion of dead insects") +
+  xlab("log10(concentration)")
+
+## fitting binomial GLM
+fit7 <- glm(cbind(y, 20 - y) ~ lconc + species,
+            family = binomial,
+            data = fungi)
+summary(fit7)
+estimates <- coef(fit7)
+
+drop1(fit7, test = "Chisq")
+
+## what is the log odds of killing the citrus psyllid when using a
+## log10(concentration) of 5 for B. bassiana?
+estimates[1] + estimates[2] * 5
+
+## what is the average probability of killing the citrus psyllid when using a
+## log10(concentration) of 5 for B. bassiana?
+plogis(estimates[1] + estimates[2] * 5)
+
+## how many citrus psyllids would die out of a batch of 20, on average, when using a
+## log10(concentration) of 5 for B. bassiana?
+plogis(estimates[1] + estimates[2] * 5) * 20
+
+## odds ratio for an increase in one unit in log10(concentration)
+exp(estimates[2])
+## an 84% increase in the odds of dying for every extra unit in log10(concentration)
+
+## what is the odds ratio of a citrus psyllid dying when using
+## I. fumosorosea rather than B. bassiana?
+exp(estimates[3])
+
+## what is the % increase in the odds of a citrus psyllid dying when using
+## I. fumosorosea rather than B. bassiana?
+exp(estimates[3]) * 100
+
+## 95% confidence interval for the odds ratio
+exp(confint.default(fit7, parm = "speciesisaria"))
+## the odds of the insect dying when infected with isaria is 2 to 4 times
+## the odds of dying when infected with beauveria, with 95% confidence
+
+## prediction
+newdata <- expand.grid(lconc = seq(4, 8, length = 200),
+                       species = c("beauveria","isaria"))
+
+add_predictions(data = newdata, model = fit7, type = "response") %>%
+  ggplot(aes(x = lconc, y = pred, colour = species)) +
+  theme_bw() +
+  geom_point(aes(y = y/20),
+             data = fungi) +
+  geom_line()
+
+## LD50 for beauveria  
+dose.p(fit7, p = 0.5, cf = 1:2)
+
+## LD50 for isaria (a bit fiddly due to how the function dose.p works)
+dose.p(update(fit7, . ~ . - 1), p = 0.5, cf = c(3,1))
+
+## using alternative link functions
+
+x_logistic <- tibble(x = seq(-5, 5, length = 200),
+                     `f(x)` = dlogis(x),
+                     `F(x)` = plogis(x),
+                     dist = "logistic")
+
+x_logistic %>%
+  pivot_longer(2:3,
+               names_to = "type",
+               values_to = "y") %>%
+  ggplot(aes(x = x, y = y)) +
+  theme_bw() +
+  geom_line() +
+  facet_wrap(~ type, scales = "free_y") +
+  ylab("")
+
+x_normal <- tibble(x = seq(-5, 5, length = 200),
+                   `f(x)` = dnorm(x),
+                   `F(x)` = pnorm(x),
+                   dist = "normal")
+
+x_normal %>%
+  pivot_longer(2:3,
+               names_to = "type",
+               values_to = "y") %>%
+  ggplot(aes(x = x, y = y)) +
+  theme_bw() +
+  geom_line() +
+  facet_wrap(~ type, scales = "free_y") +
+  ylab("")
+
+library(ordinal)
+x_gumbel <- tibble(x = seq(-5, 5, length = 200),
+                   `f(x)` = dgumbel(x, max = FALSE),
+                   `F(x)` = pgumbel(x, max = FALSE),
+                   dist = "gumbel")
+
+x_gumbel %>%
+  pivot_longer(2:3,
+               names_to = "type",
+               values_to = "y") %>%
+  ggplot(aes(x = x, y = y)) +
+  theme_bw() +
+  geom_line() +
+  facet_wrap(~ type, scales = "free_y") +
+  ylab("")
+
+x_dist <- rbind(x_logistic, x_normal, x_gumbel)
+
+x_dist %>%
+  ggplot(aes(x = x, y = `f(x)`, col = dist)) +
+  theme_bw() +
+  geom_line()
+
+x_dist %>%
+  ggplot(aes(x = x, y = `F(x)`, col = dist)) +
+  theme_bw() +
+  geom_line()
+
+## loading the golf dataset
+golf_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_glm/data/golf_putts.csv")
+golf_df
+
+## exploratory plot
+golf_df %>%
+  ggplot(aes(x = distance, y = success/attempts)) +
+  theme_bw() +
+  geom_point()
+
+## fitting binomial models with 3 different links and checking predicted curves
+fit8 <- glm(cbind(success, attempts - success) ~ distance,
+            family = binomial(link = "logit"), ## default link
+            data = golf_df)
+
+fit9 <- glm(cbind(success, attempts - success) ~ distance,
+            family = binomial(link = "probit"),
+            data = golf_df)
+
+fit10 <- glm(cbind(success, attempts - success) ~ distance,
+             family = binomial(link = "cloglog"),
+             data = golf_df)
+
+newdata <- tibble(distance = seq(2, 20, length = 200))
+newdata <- add_predictions(data = newdata, model = fit8, var = "logit", type = "response")
+newdata <- add_predictions(data = newdata, model = fit9, var = "probit", type = "response")
+newdata <- add_predictions(data = newdata, model = fit10, var = "cloglog", type = "response")
+
+newdata %>%
+  pivot_longer(cols = 2:4,
+               names_to = "link",
+               values_to = "pred") %>%
+  ggplot(aes(x = distance, y = pred, col = link)) +
+  theme_bw() +
+  geom_point(data = golf_df,
+             aes(y = success/attempts, col = NA)) +
+  geom_line()
+
+## using quadratic trends
+fit11 <- glm(cbind(success, attempts - success) ~ poly(distance, 2),
+             family = binomial(link = "cloglog"),
+             data = golf_df)
+
+newdata <- add_predictions(data = newdata, model = fit11, var = "cloglog quad", type = "response")
+
+newdata %>%
+  pivot_longer(cols = 2:5,
+               names_to = "link",
+               values_to = "pred") %>%
+  ggplot(aes(x = distance, y = pred, col = link)) +
+  theme_bw() +
+  geom_point(data = golf_df,
+             aes(y = success/attempts, col = NA)) +
+  geom_line()
+## careful extrapolating!
