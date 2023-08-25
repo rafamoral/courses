@@ -161,4 +161,67 @@ pchisq(deviance(fit2) - deviance(fit3), df = 3, lower.tail = FALSE)
 
 anova(fit2, fit3, test = 'Chisq')
 
-## loading the xxxx dataset (offset example)
+## loading the insurance dataset (offset example)
+insurance_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_glm/data/insurance.csv")
+insurance_df$District <- as.factor(insurance_df$District)
+insurance_df$Age <- factor(insurance_df$Age, levels = c("<25", "25-29", "30-35", ">35"))
+
+## exploratory plots
+insurance_df %>%
+  ggplot(aes(x = Holders, y = Claims)) +
+  theme_bw() +
+  geom_point()
+
+insurance_df %>%
+  ggplot(aes(x = Age, y = Claims)) +
+  theme_bw() +
+  geom_boxplot()
+
+insurance_df %>%
+  ggplot(aes(x = Age, y = Claims/Holders)) +
+  theme_bw() +
+  geom_boxplot()
+
+## fitting the Poisson model without offset
+fit4 <- glm(Claims ~ Age,
+            family = poisson,
+            data = insurance_df)
+summary(fit4)
+
+exp(2.2) # according to this misspecified model, people older than 35 make
+         # 9 times more claims than people younger than 25
+
+## fitting the Poisson model with offset
+fit5 <- glm(Claims ~ Age + offset(log(Holders)),
+            family = poisson,
+            data = insurance_df)
+summary(fit5)
+
+exp(-0.5) # now this model estimates a 40% reduction in claims for people
+          # older than 35 compared to people younger than 25
+
+newdata <- tibble(Age = unique(insurance_df$Age),
+                  Holders = 1000)
+
+add_predictions(data = newdata, model = fit5, type = 'response')
+
+## Goodness-of-fit of Poisson models
+
+## loading the progeny data
+library(hnp)
+data(progeny)
+progeny
+
+fit6 <- glm(y ~ extract,
+            family = poisson,
+            data = progeny)
+summary(fit6)
+
+curve(dchisq(x, fit6$df.residual), xlim = c(0, 100))
+abline(v = deviance(fit6))
+pchisq(deviance(fit6), fit6$df.residual, lower.tail = FALSE)
+
+qchisq(0.95, fit6$df.residual) # critical value
+
+## half-normal plot with a simulated envelope
+hnp(fit6)
