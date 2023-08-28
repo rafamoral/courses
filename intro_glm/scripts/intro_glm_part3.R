@@ -312,13 +312,115 @@ ggarrange(p1, p2, ncol = 1, common.legend = TRUE)
 
 ## Zero-Inflation --------------------------------------------------------------
 
+## ZIP distribution
+tibble(x = 0:15,
+       `P(x)` = dZIP(x, mu = 5, sigma = 0.2)) %>%
+  ggplot(aes(x = x, y = `P(x)`)) +
+  theme_bw() +
+  geom_bar(stat = "identity")
 
+## Example: hunting spider abundance
 spider_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_glm/data/spider.csv")
-names(spider_df) <- c("count","soil_dry_mass")
+spider_df
 
+## exploratory plot
+spider_df %>%
+  ggplot(aes(x = soil_dry_mass, y = count)) +
+  theme_bw() +
+  geom_point()
+
+## ZIP model
 library(pscl)
 fit12 <- zeroinfl(count ~ soil_dry_mass,
                   dist = "poisson",
                   data = spider_df)
 summary(fit12)
+
+estimates <- coef(fit12)
+
+## what is the log odds that the latent variable takes the value of 1, if soil_dry_mass = 3?
+estimates[3] + estimates[4] * 3
+
+## what is the probability that the latent variable takes the value of 1, if soil_dry_mass = 3?
+## what is the probability there are no hunting spiders in environments with soil_dry_mass = 3?
+plogis(estimates[3] + estimates[4] * 3)
+
+## what is the probability that there are no hunting spiders in environments
+## with soil_dry_mass = 1, 2, 3, 4?
+plogis(estimates[3] + estimates[4] * 1:4)
+
+## what is the log of the mean abundance of hunting spiders in environments
+## with soil_dry_mass = 3?
+estimates[1] + estimates[2] * 3
+
+## what is the mean abundance of hunting spiders in environments
+## with soil_dry_mass = 3?
+exp(estimates[1] + estimates[2] * 3)
+
+## what is the mean abundance of hunting spiders in environments
+## with soil_dry_mass = 1, 2, 3, 4?
+exp(estimates[1] + estimates[2] * 1:4)
+
+spider_pred <- tibble(soil_dry_mass = 1:4)
+spider_pred <- add_predictions(data = spider_pred, fit12, type = "response", var = "response")
+spider_pred <- add_predictions(data = spider_pred, fit12, type = "zero", var = "zero")
+spider_pred <- add_predictions(data = spider_pred, fit12, type = "count", var = "count")
+spider_pred
+
+spider_pred$response
+(1 - spider_pred$zero) * spider_pred$count
+
+## fitted curve
+newdata <- tibble(soil_dry_mass = seq(1, 3.5, length = 200))
+newdata <- add_predictions(data = newdata, model = fit12, type = "response", var = "count")
+
+spider_df %>%
+  ggplot(aes(x = soil_dry_mass, y = count)) +
+  theme_bw() +
+  geom_point() +
+  geom_line(data = newdata)
+
+## goodness-of-fit
 hnp(fit12)
+
+## ZINB distribution
+tibble(x = 0:15,
+       ZIP = dZIP(x, mu = 5, sigma = 0.2),
+       ZINB = dZINBI(x, mu = 5, sigma = 1, nu = 0.2)) %>%
+  pivot_longer(2:3,
+               names_to = "model",
+               values_to = "P(x)") %>%
+  ggplot(aes(x = x, y = `P(x)`, fill = model)) +
+  theme_bw() +
+  geom_bar(stat = "identity",
+           position = "dodge")
+
+## Fitting ZINB model
+fit13 <- zeroinfl(count ~ soil_dry_mass,
+                  dist = "negbin",
+                  data = spider_df)
+summary(fit13)
+hnp(fit13)
+
+estimates_zip <- estimates ## current estimates object
+estimates_zinb <- coef(fit13)
+
+mu_zip <- exp(estimates_zip[1] + estimates_zip[2] * 3)
+omega_zip <- plogis(estimates_zip[3] + estimates_zip[4] * 3)
+
+mu_zinb <- exp(estimates_zinb[1] + estimates_zinb[2] * 3)
+omega_zinb <- plogis(estimates_zinb[3] + estimates_zinb[4] * 3)
+theta_zinb <- fit13$theta
+
+## fitted distribution of spider abundance when soil_dry_mass = 3
+tibble(x = 0:25,
+       ZIP = dZIP(x, mu = mu_zip, sigma = omega_zip),
+       ZINB = dZINBI(x, mu = mu_zinb, sigma = theta_zinb, nu = omega_zinb)) %>%
+  pivot_longer(2:3,
+               names_to = "model",
+               values_to = "P(x)") %>%
+  ggplot(aes(x = x, y = `P(x)`, fill = model)) +
+  theme_bw() +
+  geom_bar(stat = "identity",
+           position = "dodge") +
+  xlab("Hunting spider abundance")
