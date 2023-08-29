@@ -51,9 +51,7 @@ plogis(fixef(fit3) + c(-1, 1) * 1.96 * VarCorr(fit3)$herd[1])
 ranef(fit3)
 coef(fit2)
 
-
-
-
+## shrinkage
 comp <- tibble("herd" = 1:15,
                "flat" = plogis(coef(fit2)),
                "mixed" = plogis(fixef(fit3) + ranef(fit3)$herd$`(Intercept)`))
@@ -61,12 +59,15 @@ comp <- tibble("herd" = 1:15,
 comp %>%
   pivot_longer(2:3,
                names_to = "model type",
-               values_to = "logit") %>%
-  ggplot(aes(x = `model type`, y = logit, group = herd)) +
+               values_to = "pi") %>%
+  ggplot(aes(x = `model type`, y = pi, group = herd)) +
   theme_bw() +
   geom_point() +
-  geom_line()
+  geom_line() +
+  ylab(expression(pi))
 
-#weight_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_glm/data/weight.csv")
-#weight_df
+## Linear Mixed Effect Models --------------------------------------------------
+
+alcohol_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_mixed_models/data/alcohol.csv")
+alcohol_df
 
