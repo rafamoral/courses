@@ -403,58 +403,141 @@ mathach_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main
 mathach_school_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_mixed_models/data/mathachieveschool.csv")
 
 ## in principle, just fine, but in practice not so much... convergence errors
-M_22 <- lmer(mathach ~ ses + sex + minority + (ses|school) + (sex|school) + (minority|school),
-             REML = F,
-             data = mathach_df)
+fit22 <- lmer(mathach ~ ses + sex + minority + (ses | school) + (sex | school) + (minority | school),
+              data = mathach_df)
+summary(fit22)
+head(ranef(fit22)$school) ## b0, b1, c0, c1, d0, d1
 
-M_23 <- lmer(mathach ~ ses + sex + minority + (1 + ses|school), 
-             REML = F,
-             data = mathach_df)
+fit23 <- lmer(mathach ~ ses + sex + minority + (ses | school),
+              data = mathach_df)
+summary(fit23)
+anova(fit23)
 
-mathach_join_df <- inner_join(mathach_df, mathach_school_df, by = 'school')
+mathach_join_df <- inner_join(mathach_df, mathach_school_df, by = "school")
 
-M_24 <- lmer(mathach ~ ses + himinty + (1 + ses|school), 
-             REML = F,
-             data = mathach_join_df)
+fit24 <- lmer(mathach ~ ses + sex + himinty + sector + pracad + disclim + (ses | school), 
+              data = mathach_join_df)
+summary(fit24)
+anova(fit24)
 
-M_25 <- lmer(mathach ~ ses + himinty + (1 + ses|school) + (himinty|school), 
-             REML = F,
-             data = mathach_join_df)
+## non-sensical model, himinty is a grouping variable itself, cannot vary by school
+## there is no range of himinty values per each school
+fit25 <- lmer(mathach ~ ses + himinty + (ses | school) + (himinty | school),
+              data = mathach_join_df)
 
-# does not work ...
-# M_26 <- lmer(mathach ~ ses + pracad + (ses|school) + (pracad|school)) 
+mathach_join_df %>%
+  filter(school %in% unique(school)[1:9]) %>%
+  ggplot(aes(x = himinty, y = mathach)) +
+  theme_bw() +
+  facet_wrap(~ school) +
+  geom_point()
 
+## same with any other school-level predictor
+mathach_join_df %>%
+  filter(school %in% unique(school)[1:9]) %>%
+  ggplot(aes(x = pracad, y = mathach)) +
+  theme_bw() +
+  facet_wrap(~ school) +
+  geom_point()
 
+## however, pupil-level predictors are fine
+mathach_join_df %>%
+  filter(school %in% unique(school)[1:9]) %>%
+  ggplot(aes(x = ses, y = mathach)) +
+  theme_bw() +
+  facet_wrap(~ school) +
+  geom_point()
 
 ## Generalized Linear Mixed Models (GLMMs) -------------------------------------
 
+?glmer
+?family
 
+data("Arabidopsis")
+arabidopsis_df <- Arabidopsis %>% as_tibble
+arabidopsis_df <- arabidopsis_df %>%
+  mutate(gen = as.factor(gen),
+         rack = as.factor(rack),
+         nutrient = as.factor(nutrient))
+
+## nutrient: fertilisation treatment with 2 levels
+## amd: simulated herbivory treatment with 2 levels
+## rack: nuisance factor, 2 greenhouse racks
+## status: nuisance factor, 3 germination methods
+fit26 <- glmer(total.fruits ~ rack + status + nutrient * amd +
+                 (1 | reg) + (1 | popu) + (1 | gen),
+               family = "poisson",
+               data = arabidopsis_df)
+summary(fit26)
+drop1(fit26, test = "Chisq")
+
+arabidopsis_df %>%
+  ggplot(aes(x = nutrient, y = total.fruits, fill = amd)) +
+  theme_bw() +
+  geom_boxplot()
+
+arabidopsis_df %>%
+  ggplot(aes(x = gen, y = total.fruits, fill = amd)) +
+  theme_bw() +
+  geom_boxplot() +
+  facet_wrap(~ nutrient, ncol = 1)
+
+library(sjPlot)
+plot_model(fit26, type = "re", sort.est = "(Intercept)")
 
 ## Individual-Level Random Effects ---------------------------------------------
 
+library(hnp)
+data(cbb)
+cbb_df <- cbb %>% as_tibble
+cbb_df
 
+fit27 <- glm(count ~ block + trap + week,
+             family = poisson,
+             data = cbb_df)
+summary(fit27)
+anova(fit27, test = "Chisq")
+
+cbb_df %>%
+  group_by(trap, week) %>%
+  summarise(mean = mean(count),
+            var = var(count)) %>%
+  ggplot(aes(x = mean, y = var)) +
+  theme_bw() +
+  geom_point()
+
+hnp(fit27)
+
+fit28 <- glm.nb(count ~ block + trap + week,
+                data = cbb_df)
+drop1(fit28, test = "F")
+
+hnp(fit28, paint = TRUE)
+
+cbb_df$z <- factor(1 : nrow(cbb_df))
+
+fit29 <- glmer(count ~ block + trap + week + (1 | z),
+               family = poisson,
+               data = cbb_df)
+summary(fit29)
+drop1(fit29, test = "Chisq")
+
+hnp(fit29, paint = TRUE, verb = TRUE)
 
 ## Bayesian Mixed Models -------------------------------------------------------
 
 library(brms)
 
-M_27 <- lm(Reaction ~ Days, data = sleepstudy)  # linear regression
-M_28 <- brm(Reaction ~ Days, data = sleepstudy) # Bayesian linear regression
+fit30 <- lm(Reaction ~ Days, data = sleepstudy)  # linear regression
+fit31 <- brm(Reaction ~ Days, data = sleepstudy) # Bayesian linear regression
 
-summary(M_27)$coefficients
-M_28
+summary(fit30)$coefficients
+fit31
 
-## Bayesian mixed effects model
+fit32 <- lmer(Reaction ~ Days + (Days | Subject), data = sleepstudy)
+fit33 <- brm(Reaction ~ Days + (Days | Subject), data = sleepstudy)
+fit34 <- brm(Reaction ~ Days + (Days || Subject), data = sleepstudy)
 
-M_29 <- brm(Reaction ~ Days + (Days|Subject), data = sleepstudy)
-M_8 <- lmer(Reaction ~ Days + (Days|Subject), data = sleepstudy)
-
-M_30 <- brm(Reaction ~ Days + (Days|Subject), 
-            data = sleepstudy)
-
-M_31 <- brm(Reaction ~ Days + (Days||Subject), 
-            data = sleepstudy)
-
-waic_30 <- waic(M_30)
-waic_31 <- waic(M_31)
-loo_compare(waic_30, waic_31)
+waic_33 <- waic(fit33)
+waic_34 <- waic(fit34)
+loo_compare(waic_33, waic_34)
