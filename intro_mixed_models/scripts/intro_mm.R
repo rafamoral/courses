@@ -534,10 +534,19 @@ fit31 <- brm(Reaction ~ Days, data = sleepstudy) # Bayesian linear regression
 summary(fit30)$coefficients
 fit31
 
+plot(fit31)
+
 fit32 <- lmer(Reaction ~ Days + (Days | Subject), data = sleepstudy)
 fit33 <- brm(Reaction ~ Days + (Days | Subject), data = sleepstudy)
 fit34 <- brm(Reaction ~ Days + (Days || Subject), data = sleepstudy)
 
-waic_33 <- waic(fit33)
-waic_34 <- waic(fit34)
-loo_compare(waic_33, waic_34)
+## parallelisation
+# fit33 <- brm(Reaction ~ Days + (Days | Subject),
+#              cores = 4,
+#              data = sleepstudy)
+
+plot(fit33)
+plot(fit34)
+
+waic(fit33, fit34)
+loo(fit33, fit34)
