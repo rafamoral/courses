@@ -226,7 +226,49 @@ pchisq(deviance(fit8) - deviance(fit9), df = 1, lower.tail = F)
 
 ## one continuous and one categorical predictor
 
+samara_df <- read_table("https://raw.githubusercontent.com/rafamoral/courses/main/model_selection/data/samara.txt")
+samara_df <- samara_df %>%
+  mutate(Tree = factor(Tree))
 
+samara_df %>%
+  ggplot(aes(x = Load, y = Velocity, col = Tree)) +
+  theme_bw() +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+## null model
+fit10 <- lm(Velocity ~ 1, data = samara_df)
+## lines parallel to the x-axis
+fit11 <- lm(Velocity ~ Tree, data = samara_df)
+## equal lines model
+fit12 <- lm(Velocity ~ Load, data = samara_df)
+## parallel lines model
+fit13 <- lm(Velocity ~ Tree + Load, data = samara_df)
+## common intercepts model
+fit14 <- lm(Velocity ~ Tree : Load, data = samara_df)
+## separate lines model
+fit15 <- lm(Velocity ~ Tree * Load, data = samara_df)
+
+library(modelr)
+samara_df %>%
+  add_predictions(model = fit10, var = "M0") %>%
+  add_predictions(model = fit11, var = "M1") %>%
+  add_predictions(model = fit12, var = "M2") %>%
+  add_predictions(model = fit13, var = "M3") %>%
+  add_predictions(model = fit14, var = "M4") %>%
+  add_predictions(model = fit15, var = "M5") %>%
+  pivot_longer(cols = 4:9,
+               names_to = "model",
+               values_to = "pred") %>%
+  ggplot(aes(x = Load, y = Velocity, col = Tree)) +
+  theme_bw() +
+  geom_point() +
+  geom_line(aes(y = pred)) +
+  facet_wrap(~ model)
+
+anova(fit10, fit11, fit13, fit15)
+anova(fit10, fit12, fit13, fit15)
+anova(fit10, fit12, fit14, fit15)
 
 # thresholds to compare loocv elpd at the deviance scale
 # AIC \approx. -2 * elpd, however the approx doesn't hold well for more complex models
