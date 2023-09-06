@@ -270,5 +270,113 @@ anova(fit10, fit11, fit13, fit15)
 anova(fit10, fit12, fit13, fit15)
 anova(fit10, fit12, fit14, fit15)
 
+## Out-of-Sample Predictive Performance ----------------------------------------
+
+source("https://raw.githubusercontent.com/rafamoral/courses/main/model_selection/scripts/helper_functions.R")
+
+## leave-one-out cross validation
+
+## read in housing data
+housing_df <- read_csv("https://raw.githubusercontent.com/mark-andrews/msms03/main/data/housing.csv")
+housing_df <- mutate(housing_df, logprice = log(price))
+ggplot(housing_df, aes(x = price)) + geom_histogram(bins=50)
+
+# normal model
+M10 <- lm(price ~ 1, data = housing_df)
+# log normal model
+M11 <- lm(logprice ~ 1, data = housing_df)
+
+lm_loo_cv(M10)
+lm_loo_cv(M11)
+
+# deviance scale
+lm_loo_cv(M10, deviance_scale = TRUE) # -2 * elpd of M10
+lm_loo_cv(M11, deviance_scale = TRUE) # -2 * elpd of M11
+
+lm_loo_cv(M10, deviance_scale = TRUE) - lm_loo_cv(M11, deviance_scale = TRUE)
+
+
+# AIC ---------------------------------------------------------------------
+
+logLik(M10)      # log likelihood 
+-2 * logLik(M10) # deviance (-2 x log likelihood)
+2 * 2 - 2 * logLik(M10) # AIC: 2K + deviance
+AIC(M10) # using built in AIC
+
+# AIC of M11
+AIC(M11)
+
+# estimate standard errors for elpd
+lm_loo_cv(M10, deviance_scale = TRUE, se = TRUE)
+lm_loo_cv(M11, deviance_scale = TRUE, se = TRUE)
+
+
+# Small sample correction -------------------------------------------------
+
+AIC(M10)
+AICc(M10)
+
+AIC(M11)
+AICc(M11)
+
+
+# Nonlinear regression with splines ---------------------------------------
+library(splines)
+library(modelr)
+
+gssvocab_df <- read_csv("https://raw.githubusercontent.com/mark-andrews/msms03/main/data/GSSvocab.csv")
+
+ggplot(gssvocab_df,aes(x = age, y = vocab)) + geom_point()
+
+df_seq <- seq(3, 30)
+
+M_gssvocab <- df_seq %>% 
+  enframe(name = 'id', value = 'k') %>% 
+  mutate(model = map(k, ~lm(vocab ~ ns(age, df = .),
+                            data = gssvocab_df)))
+
+
+
+add_predictions(gssvocab_df, M_gssvocab$model[[1]]) %>% 
+  ggplot(aes(x = age, y = vocab)) + 
+  geom_point() +
+  geom_line(aes(y = pred), colour = 'red')
+
+add_predictions(gssvocab_df, M_gssvocab$model[[5]]) %>% 
+  ggplot(aes(x = age, y = vocab)) + 
+  geom_point() +
+  geom_line(aes(y = pred), colour = 'red')
+
+add_predictions(gssvocab_df, M_gssvocab$model[[25]]) %>% 
+  ggplot(aes(x = age, y = vocab)) + 
+  geom_point() +
+  geom_line(aes(y = pred), colour = 'red')
+
+M_gssvocab %>% mutate(aic = map_dbl(model, AICc)) %>% print(n = Inf)
+
+wpred <- M_gssvocab %>%
+  mutate(aic = map_dbl(model, AICc),
+         weight = akaike_weights(aic),
+         pred = map(model, predict),
+         wpred = map2(weight, pred, ~ .x * .y)) %>% 
+  unnest_wider(wpred) %>% 
+  select(`1`:`72`) %>% 
+  as.matrix()
+
+colSums(wpred)
+
+
+# plot weighted predictions
+mutate(gssvocab_df, pred = colSums(wpred)) %>% 
+  ggplot(aes(x = age, y = vocab)) + 
+  geom_point() +
+  geom_line(aes(y = pred), colour = 'red')
+
+
+
+
+
+
+
 # thresholds to compare loocv elpd at the deviance scale
 # AIC \approx. -2 * elpd, however the approx doesn't hold well for more complex models
