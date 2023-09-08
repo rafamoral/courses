@@ -335,53 +335,185 @@ library(splines)
 library(modelr)
 
 vocab_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/model_selection/data/vocab.csv")
+vocab_df
 
-ggplot(gssvocab_df,aes(x = age, y = vocab)) + geom_point()
+vocab_df %>%
+  ggplot(aes(x = age, y = vocab)) +
+  theme_bw() +
+  geom_point()
 
+stats_vocab <- tibble(df = 1:20,
+                      RSS = rep(NA, 20),
+                      R2 = rep(NA, 20),
+                      AICc = rep(NA, 20))
+                      
+for(i in 1:20) {
+  model <- lm(vocab ~ poly(age, i),
+              data = vocab_df)
+  stats_vocab$RSS[i] <- sum(residuals(model)^2)
+  stats_vocab$R2[i] <- summary(model)$r.squared
+  stats_vocab$AICc[i] <- AICc(model)
+}
 
-#compare RSS, R2, AIC
-
-
-df_seq <- seq(3, 30)
-
-M_gssvocab <- df_seq %>% 
-  enframe(name = 'id', value = 'k') %>% 
-  mutate(model = map(k, ~lm(vocab ~ ns(age, df = .),
-                            data = gssvocab_df)))
-
-
-
-add_predictions(gssvocab_df, M_gssvocab$model[[1]]) %>% 
-  ggplot(aes(x = age, y = vocab)) + 
+stats_vocab %>%
+  pivot_longer(2:4,
+               names_to = "gof_measure",
+               values_to = "value") %>%
+  ggplot(aes(x = df, y = value)) +
+  theme_bw() +
   geom_point() +
-  geom_line(aes(y = pred), colour = 'red')
+  facet_wrap(~ gof_measure,
+             scales = "free_y")
 
-add_predictions(gssvocab_df, M_gssvocab$model[[5]]) %>% 
-  ggplot(aes(x = age, y = vocab)) + 
+vocab_df %>%
+  add_predictions(model = lm(vocab ~ poly(age, 3),
+                             data = vocab_df)) %>%
+  ggplot(aes(x = age, y = vocab)) +
+  theme_bw() +
   geom_point() +
-  geom_line(aes(y = pred), colour = 'red')
+  geom_line(aes(y = pred))
+## replace poly with ns
+## show that with df = 71 it is a saturated model
 
-add_predictions(gssvocab_df, M_gssvocab$model[[25]]) %>% 
-  ggplot(aes(x = age, y = vocab)) + 
+stats_vocab$AICc
+akaike_weights(stats_vocab$AICc) %>% round(2)
+akaike_weights(stats_vocab$AICc) %>% sum
+
+vocab_df_pred <- vocab_df
+
+for(i in 1:20) {
+  vocab_df_pred <- vocab_df_pred %>%
+    add_predictions(model = lm(vocab ~ poly(age, i),
+                               data = vocab_df),
+                    var = paste("df =", i))
+}
+
+all_pred <- vocab_df_pred %>%
+  dplyr::select(- age, - vocab) %>%
+  as.matrix
+
+vocab_df$wpred <- (t(all_pred) * akaike_weights(stats_vocab$AICc)) %>%
+  colSums
+
+vocab_df %>%
+  add_predictions(model = lm(vocab ~ ns(age, 6),
+                             data = vocab_df)) %>%
+  ggplot(aes(x = age, y = vocab)) +
+  theme_bw() +
   geom_point() +
-  geom_line(aes(y = pred), colour = 'red')
+  geom_line(aes(y = pred)) +
+  geom_line(aes(y = wpred), col = 2)
 
-M_gssvocab %>% mutate(aic = map_dbl(model, AICc)) %>% print(n = Inf)
-
-wpred <- M_gssvocab %>%
-  mutate(aic = map_dbl(model, AICc),
-         weight = akaike_weights(aic),
-         pred = map(model, predict),
-         wpred = map2(weight, pred, ~ .x * .y)) %>% 
-  unnest_wider(wpred) %>% 
-  select(`1`:`72`) %>% 
-  as.matrix()
-
-colSums(wpred)
+#########################
 
 
-# plot weighted predictions
-mutate(gssvocab_df, pred = colSums(wpred)) %>% 
-  ggplot(aes(x = age, y = vocab)) + 
-  geom_point() +
-  geom_line(aes(y = pred), colour = 'red')
+
+
+
+student_df <- read_csv("https://raw.githubusercontent.com/mark-andrews/msms03/main/data/student.csv")
+
+M12 <- lm(math ~ ., data = student_df)
+
+M12_step_back <- step(M12, direction = 'backward')
+AIC(M12) # notice how this is different to the reported AIC in step
+
+M13 <- lm(math ~ 1, data = student_df)
+M13_step_forward <- step(M13, direction = 'forward', scope = formula(M12))
+
+M14_step_both <- step(M12, direction = 'both')
+M14_step_both
+
+M15_step_both <- step(M13, direction = 'both', scope = formula(M12))
+
+# all subsets regression
+library(MuMIn)
+
+M16 <- lm(Fertility ~ ., data = swiss, na.action = 'na.fail')
+M16_all_subsets <- dredge(M16)
+
+conf_set <- get.models(M16_all_subsets, cumsum(weight) < 0.95)
+
+
+# coefs versus Anova ------------------------------------------------------
+
+round(car::Anova(M16), 3)
+round(summary(M16)$coefficients, 3)
+
+M17 <- lm(weight ~ group, data = PlantGrowth)
+round(car::Anova(M17), 3)
+round(summary(M17)$coefficients, 3)
+
+
+
+# Lasso, ridge, elastic nets ----------------------------------------------
+
+library(glmnet)
+
+# lasso
+y <- student_df$math
+X <- as.matrix(select(student_df, -math))
+
+M18_lasso <- glmnet(X,y, alpha = 1)
+plot(M18_lasso, xvar = 'lambda', label = TRUE)
+
+M18_lasso_cv <- cv.glmnet(X, y, alpha = 1)
+plot(M18_lasso_cv)
+
+coef(M18_lasso, 
+     s = c(M18_lasso_cv$lambda.min,
+           M18_lasso_cv$lambda.1se))
+
+#  ridge
+M19_ridge <- glmnet(X,y, alpha = 0)
+plot(M19_ridge, xvar = 'lambda', label = TRUE)
+
+M19_ridge_cv <- cv.glmnet(X, y, alpha = 0)
+plot(M19_ridge_cv)
+
+coef(M19_ridge, 
+     s = c(M19_ridge_cv$lambda.min,
+           M19_ridge_cv$lambda.1se))
+
+
+
+# Bayesian regularized variable selection ---------------------------------
+
+student_df <- read_csv("https://raw.githubusercontent.com/mark-andrews/msms03/main/data/student_scaled.csv")
+
+M20 <- brm(math ~ .,
+           data = student_df,
+           prior = set_prior("horseshoe(df=3)"))
+
+library(bayesplot)
+mcmc_areas(M20, 
+           pars = vars(-c("b_Intercept", "sigma", "lprior", 'lp__')),
+           prob = 0.95)
+
+
+# More Bayesian model selection -------------------------------------------
+
+sleep_df <- read_csv("https://raw.githubusercontent.com/mark-andrews/msms03/main/data/sleepstudy.csv")
+
+ggplot(sleep_df,
+       aes(x = Days, y = Reaction, colour = Subject)) + 
+  geom_point() + 
+  stat_smooth(method ='lm' , se = F) + 
+  facet_wrap(~Subject)
+
+
+# Bayesian Linear Regression
+M21 <- brm(Reaction ~ Days, data = sleep_df)
+
+# normal linear mixed effects
+M22 <- brm(Reaction ~ Days + (Days|Subject), data = sleep_df)
+
+# robust linear mixed effects
+M23 <- brm(Reaction ~ Days + (Days|Subject), 
+           family = student(),
+           data = sleep_df)
+
+waic(M21)
+waic(M22)
+waic(M23)
+
+loo_compare(waic(M21), waic(M22), waic(M23))
