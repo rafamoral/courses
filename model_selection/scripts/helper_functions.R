@@ -1,4 +1,5 @@
 ## functions written by Dr Mark Andrews (github.com/mark-andrews)
+## glm_loo_cv adapted by Dr Rafael Moral (github.com/rafamoral)
 
 lm_loo_cv <- function(m, se = FALSE, deviance_scale = FALSE) {
   
@@ -54,3 +55,32 @@ akaike_weights <- function(aic) {
 get_rsq <- function(m) summary(m)$r.sq
 get_rss <- function(m) sum(residuals(m)^2)
 get_adjrsq <- function(m) summary(m)$adj.r.sq
+
+glm_loo_cv <- function(m, deviance_scale = FALSE) {
+  
+  data_df <- m$model
+  fam <- m$family[1]$family
+  ddist <- switch(fam,
+                  "gaussian" = gamlss.dist::dNO,
+                  "Gamma" = gamlss.dist::dGA,
+                  "inverse.gaussian" = gamlss.dist::dIG)
+  
+  n <- nrow(data_df)
+  glm_formula <- formula(m)
+  outcome_var <- all.vars(glm_formula)[1]
+  
+  glm_drop_i <- function(i) {
+    m_not_i <- update(m, data = slice(data_df, -i))
+    slice(data_df, i) %>% 
+      modelr::add_predictions(m_not_i, type = "response") %>% 
+      transmute(lpd = ddist(x = .[[outcome_var]], mu = pred, sigma = sqrt(summary(m_not_i)$dispersion), log = TRUE)) %>% 
+      unlist()
+  }
+  
+  s <- map_dbl(seq(n), glm_drop_i)
+  
+  if (deviance_scale) s <- -2 * s
+  
+  return(sum(s))
+  
+}

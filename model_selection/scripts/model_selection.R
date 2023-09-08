@@ -277,56 +277,70 @@ source("https://raw.githubusercontent.com/rafamoral/courses/main/model_selection
 ## leave-one-out cross validation
 
 ## read in housing data
-housing_df <- read_csv("https://raw.githubusercontent.com/mark-andrews/msms03/main/data/housing.csv")
-housing_df <- mutate(housing_df, logprice = log(price))
-ggplot(housing_df, aes(x = price)) + geom_histogram(bins=50)
+housing_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/model_selection/data/housing.csv")
+housing_df <- housing_df %>%
+  mutate(logprice = log(price))
 
-# normal model
-M10 <- lm(price ~ 1, data = housing_df)
-# log normal model
-M11 <- lm(logprice ~ 1, data = housing_df)
+housing_df %>%
+  ggplot(aes(x = price)) +
+  theme_bw() +
+  geom_histogram(bins = 50, col = "white", lwd = .2)
 
-lm_loo_cv(M10)
-lm_loo_cv(M11)
+housing_df %>%
+  ggplot(aes(x = logprice)) +
+  theme_bw() +
+  geom_histogram(bins = 50, col = "white", lwd = .2)
+
+## normal model
+fit16 <- lm(price ~ 1, data = housing_df)
+## lognormal model
+fit17 <- lm(logprice ~ 1, data = housing_df)
+
+lm_loo_cv(fit16)
+lm_loo_cv(fit17)
 
 # deviance scale
-lm_loo_cv(M10, deviance_scale = TRUE) # -2 * elpd of M10
-lm_loo_cv(M11, deviance_scale = TRUE) # -2 * elpd of M11
+lm_loo_cv(fit16, deviance_scale = TRUE) # -2 * elpd of fit16
+lm_loo_cv(fit17, deviance_scale = TRUE) # -2 * elpd of fit17
 
-lm_loo_cv(M10, deviance_scale = TRUE) - lm_loo_cv(M11, deviance_scale = TRUE)
+lm_loo_cv(fit16, deviance_scale = TRUE) - lm_loo_cv(fit17, deviance_scale = TRUE)
 
+## AIC
+## AIC \approx. -2 * elpd, however the approx doesn't hold well for more complex models
 
-# AIC ---------------------------------------------------------------------
+logLik(fit16)      # log likelihood 
+-2 * logLik(fit16) # deviance (-2 x log likelihood)
+2 * 2 - 2 * logLik(fit16) # AIC: 2K + deviance
+AIC(fit16) # using built in AIC
 
-logLik(M10)      # log likelihood 
--2 * logLik(M10) # deviance (-2 x log likelihood)
-2 * 2 - 2 * logLik(M10) # AIC: 2K + deviance
-AIC(M10) # using built in AIC
+AIC(fit17)
 
-# AIC of M11
-AIC(M11)
+## estimate standard errors for elpd
+lm_loo_cv(fit16, deviance_scale = TRUE, se = TRUE)
+lm_loo_cv(fit17, deviance_scale = TRUE, se = TRUE)
+## can do the same for AIC using bootstrap, for instance
+## WAIC will give you se's as well
+## important to take into account uncertainty when using threshold rules
 
-# estimate standard errors for elpd
-lm_loo_cv(M10, deviance_scale = TRUE, se = TRUE)
-lm_loo_cv(M11, deviance_scale = TRUE, se = TRUE)
+## Small sample correction
 
+AIC(fit16)
+AICc(fit16)
 
-# Small sample correction -------------------------------------------------
+AIC(fit17)
+AICc(fit17)
 
-AIC(M10)
-AICc(M10)
-
-AIC(M11)
-AICc(M11)
-
-
-# Nonlinear regression with splines ---------------------------------------
+## Nonlinear regression with splines
 library(splines)
 library(modelr)
 
-gssvocab_df <- read_csv("https://raw.githubusercontent.com/mark-andrews/msms03/main/data/GSSvocab.csv")
+vocab_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/model_selection/data/vocab.csv")
 
 ggplot(gssvocab_df,aes(x = age, y = vocab)) + geom_point()
+
+
+#compare RSS, R2, AIC
+
 
 df_seq <- seq(3, 30)
 
@@ -371,12 +385,3 @@ mutate(gssvocab_df, pred = colSums(wpred)) %>%
   ggplot(aes(x = age, y = vocab)) + 
   geom_point() +
   geom_line(aes(y = pred), colour = 'red')
-
-
-
-
-
-
-
-# thresholds to compare loocv elpd at the deviance scale
-# AIC \approx. -2 * elpd, however the approx doesn't hold well for more complex models
