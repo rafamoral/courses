@@ -501,40 +501,43 @@ cbind(
 
 ## Bayesian regularised variable selection -------------------------------------
 
-student_df <- read_csv("https://raw.githubusercontent.com/mark-andrews/msms03/main/data/student_scaled.csv")
+student_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/model_selection/data/student_scaled.csv")
 
-M20 <- brm(math ~ .,
-           data = student_df,
-           prior = set_prior("horseshoe(df=3)"))
+library(brms)
+fit26 <- brm(math ~ .,
+             data = student_df,
+             prior = set_prior("horseshoe(df=3)"))
+fit26
 
 library(bayesplot)
-mcmc_areas(M20, 
-           pars = vars(-c("b_Intercept", "sigma", "lprior", 'lp__')),
+mcmc_areas(fit26)
+mcmc_areas(fit26,
+           regex_pars = "^b_[safPMFtpnhirg]",
            prob = 0.95)
 
 ## another example
-sleep_df <- read_csv("https://raw.githubusercontent.com/mark-andrews/msms03/main/data/sleepstudy.csv")
+sleep_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/model_selection/data/sleepstudy.csv")
 
-ggplot(sleep_df,
-       aes(x = Days, y = Reaction, colour = Subject)) + 
+sleep_df %>%
+  ggplot(aes(x = Days, y = Reaction)) + 
   geom_point() + 
-  stat_smooth(method ='lm' , se = F) + 
-  facet_wrap(~Subject)
+  stat_smooth(method = "lm", se = FALSE) + 
+  facet_wrap(~ Subject)
 
 
 # Bayesian Linear Regression
-M21 <- brm(Reaction ~ Days, data = sleep_df)
+fit27 <- brm(Reaction ~ Days, data = sleep_df)
 
 # normal linear mixed effects
-M22 <- brm(Reaction ~ Days + (Days|Subject), data = sleep_df)
+fit28 <- brm(Reaction ~ Days + (Days | Subject), data = sleep_df)
 
 # robust linear mixed effects
-M23 <- brm(Reaction ~ Days + (Days|Subject), 
-           family = student(),
-           data = sleep_df)
+fit29 <- brm(Reaction ~ Days + (Days | Subject), 
+             family = student(),
+             data = sleep_df)
 
-waic(M21)
-waic(M22)
-waic(M23)
+waic(M27)
+waic(M28)
+waic(M29)
 
-loo_compare(waic(M21), waic(M22), waic(M23))
+loo_compare(waic(M27), waic(M28), waic(M29))
