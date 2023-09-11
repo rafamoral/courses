@@ -404,79 +404,102 @@ vocab_df %>%
   geom_line(aes(y = pred)) +
   geom_line(aes(y = wpred), col = 2)
 
-#########################
+## Variable Selection ----------------------------------------------------------
 
+## reading student dataset
+student_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/model_selection/data/student.csv")
+student_df
 
+fit18 <- lm(math ~ ., data = student_df)
 
+fit18_step_back <- step(fit18,
+                        direction = "backward")
+AIC(fit18) # notice how this is different to the reported AIC in step (dropping constant terms)
 
+fit19 <- lm(math ~ 1, data = student_df)
+fit19_step_forward <- step(fit19,
+                           direction = "forward",
+                           scope = formula(fit18))
 
-student_df <- read_csv("https://raw.githubusercontent.com/mark-andrews/msms03/main/data/student.csv")
+fit20_step_both <- step(fit18,
+                        direction = "both")
+fit20_step_both
 
-M12 <- lm(math ~ ., data = student_df)
+fit21_step_both <- step(fit19,
+                        direction = "both",
+                        scope = formula(fit18))
 
-M12_step_back <- step(M12, direction = 'backward')
-AIC(M12) # notice how this is different to the reported AIC in step
+2^27
 
-M13 <- lm(math ~ 1, data = student_df)
-M13_step_forward <- step(M13, direction = 'forward', scope = formula(M12))
-
-M14_step_both <- step(M12, direction = 'both')
-M14_step_both
-
-M15_step_both <- step(M13, direction = 'both', scope = formula(M12))
-
-# all subsets regression
+## all subsets regression
 library(MuMIn)
 
-M16 <- lm(Fertility ~ ., data = swiss, na.action = 'na.fail')
-M16_all_subsets <- dredge(M16)
+fit22 <- lm(Fertility ~ .,
+            data = swiss,
+            na.action = "na.fail")
+fit22_all_subsets <- dredge(fit22)
 
-conf_set <- get.models(M16_all_subsets, cumsum(weight) < 0.95)
+conf_set <- get.models(fit22_all_subsets, cumsum(weight) < 0.95)
+conf_set
 
+## regularisation
 
-# coefs versus Anova ------------------------------------------------------
-
-round(car::Anova(M16), 3)
-round(summary(M16)$coefficients, 3)
-
-M17 <- lm(weight ~ group, data = PlantGrowth)
-round(car::Anova(M17), 3)
-round(summary(M17)$coefficients, 3)
-
-
-
-# Lasso, ridge, elastic nets ----------------------------------------------
+## avoid overfitting of noise, e.g.
+tibble(age = seq(18, 89, length = 200)) %>%
+  add_predictions(model = lm(vocab ~ ns(age, 27),
+                             data = vocab_df),
+                  var = "vocab") %>%
+  ggplot(aes(x = age, y = vocab)) +
+  theme_bw() +
+  geom_point(data = vocab_df) +
+  geom_line()
 
 library(glmnet)
 
-# lasso
+## LASSO
 y <- student_df$math
-X <- as.matrix(select(student_df, -math))
+X <- as.matrix(dplyr::select(student_df, - math))
 
-M18_lasso <- glmnet(X,y, alpha = 1)
-plot(M18_lasso, xvar = 'lambda', label = TRUE)
+fit23_lasso <- glmnet(X, y, alpha = 1)
+plot(fit23_lasso, xvar = "lambda", label = TRUE)
 
-M18_lasso_cv <- cv.glmnet(X, y, alpha = 1)
-plot(M18_lasso_cv)
+fit23_lasso_cv <- cv.glmnet(X, y, alpha = 1)
+plot(fit23_lasso_cv)
 
-coef(M18_lasso, 
-     s = c(M18_lasso_cv$lambda.min,
-           M18_lasso_cv$lambda.1se))
+## 2nd = more regularised that is within 1 se of smallest MSE
+coef(fit23_lasso, 
+     s = c(fit23_lasso_cv$lambda.min,
+           fit23_lasso_cv$lambda.1se))
 
-#  ridge
-M19_ridge <- glmnet(X,y, alpha = 0)
-plot(M19_ridge, xvar = 'lambda', label = TRUE)
+## comparing with stepwise
+formula(fit20_step_both)
 
-M19_ridge_cv <- cv.glmnet(X, y, alpha = 0)
-plot(M19_ridge_cv)
+## Ridge regression
+fit24_ridge <- glmnet(X, y, alpha = 0)
+plot(fit24_ridge, xvar = "lambda", label = TRUE)
 
-coef(M19_ridge, 
-     s = c(M19_ridge_cv$lambda.min,
-           M19_ridge_cv$lambda.1se))
+fit24_ridge_cv <- cv.glmnet(X, y, alpha = 0)
+plot(fit24_ridge_cv)
 
+coef(fit24_ridge, 
+     s = c(fit24_ridge_cv$lambda.min,
+           fit24_ridge_cv$lambda.1se))
 
+## careful with scaling vs. non-scaling
+apply(student_df, 2, range)
 
-# Bayesian regularized variable selection ---------------------------------
+fit25_lasso <- glmnet(scale(X), y, alpha = 1)
+fit25_lasso_cv <- cv.glmnet(scale(X), y, alpha = 1)
+plot(fit25_lasso_cv)
+
+cbind(
+  coef(fit23_lasso, 
+       s = c(fit23_lasso_cv$lambda.1se)),
+  coef(fit25_lasso, 
+       s = c(fit25_lasso_cv$lambda.1se))
+  )
+
+## Bayesian regularised variable selection -------------------------------------
 
 student_df <- read_csv("https://raw.githubusercontent.com/mark-andrews/msms03/main/data/student_scaled.csv")
 
@@ -489,9 +512,7 @@ mcmc_areas(M20,
            pars = vars(-c("b_Intercept", "sigma", "lprior", 'lp__')),
            prob = 0.95)
 
-
-# More Bayesian model selection -------------------------------------------
-
+## another example
 sleep_df <- read_csv("https://raw.githubusercontent.com/mark-andrews/msms03/main/data/sleepstudy.csv")
 
 ggplot(sleep_df,
