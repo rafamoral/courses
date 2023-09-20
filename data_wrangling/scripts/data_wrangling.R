@@ -14,6 +14,7 @@ blp_df
 ## they do less (no change of variable names/types, no partial matching)
 ## and complain more (forcing you to deal with problems early on)
 
+## British Lexicon Project
 ## blp_df: experiment in psychology with human participants
 ## lexical decision experiment
 ## strings of letters are shown, the person press a button to respond whether it is a word or not
@@ -59,6 +60,9 @@ blp_df2 <- select(blp_df, participant, lex, resp, rt)
 
 ## select and rename at the same time
 select(blp_df, participant, lex, resp, reaction_time = rt)
+## base R
+#blp_df <- blp_df[, c("participant", "lex", "resp", "rt")]
+#names(blp_df)[5] <- "reaction_time"
 
 ## select by index
 select(blp_df, 1, 2, 7)
@@ -80,7 +84,7 @@ select(blp_df, contains("rt"))
 select(blp_df, ends_with("T"))
 select(blp_df, ends_with("T", ignore.case = FALSE))
 
-## RegEx matching
+## RegEx matching (regexr.com)
 select(blp_df, matches("^rt"))     ## equivalent to starts_with
 select(blp_df, matches("rt$"))     ## equivalent to ends_with
 select(blp_df, matches("^rt|rt$")) ## starts_with OR ends_with
@@ -108,7 +112,7 @@ select(blp_df, where(has_high_mean))
 #has_high_mean(participant)
 #has_high_mean(lex)
 
-# anonymous function
+## anonymous function
 select(blp_df, where(function(x) {
   is.numeric(x) && mean(x, na.rm = TRUE) > 500
 }))
@@ -120,16 +124,16 @@ select(blp_df, where(~{
 
 # ~ <=> function(.)
 
-# select "everything"
+## select "everything"
 select(blp_df, everything())
-
+## useful to reorder columns
 select(blp_df, rt, everything())
 
-
-# Reordering columns with relocate ----------------------------------------
+## (Ctrl + Shit + R)
+## Reordering columns with relocate --------------------------------------------
 
 relocate(blp_df, rt)
-relocate(blp_df, starts_with('r'))
+relocate(blp_df, starts_with("r"))
 
 relocate(blp_df, rt, .after = lex)
 relocate(blp_df, rt, .before = lex)
@@ -142,9 +146,7 @@ relocate(blp_df, where(is.numeric))
 
 relocate(blp_df, where(is.numeric), .after = last_col())
 
-
-
-# Renaming with rename ----------------------------------------------------
+## Renaming with rename --------------------------------------------------------
 
 select(blp_df, reaction_time = rt)
 select(blp_df, reaction_time = rt, everything())
@@ -153,28 +155,36 @@ rename(blp_df, reaction_time = rt)
 
 rename(blp_df, reaction_time = rt, lexical = lex)
 
+## `rename_with` a function
 rename_with(blp_df, toupper)
 rename_with(blp_df, tolower)
 
-# rename all numeric variables to uppercase
+## rename all numeric variables to uppercase
+rename_with(blp_df, toupper, where(is.numeric))
 rename_with(.data = blp_df, .fn = toupper, .cols = where(is.numeric))
 
-# let's look at `str_replace`
-y <- c('hello', 'world')
-str_replace(y, 'he', 'xx')
+## let's look at `str_replace`
+y <- c("hello", "world")
+str_replace(y, "he", "xx") # replace "he" with "xx"
 
 # ~str_replace(., 'rt', 'reaction_time')
 
+## what would happen here?
 rename_with(.data = blp_df, 
-            .fn = ~str_replace(., 'rt', 'reaction_time'),
+            .fn = ~str_replace(., "rt", "reaction_time"))
+
+rename_with(.data = blp_df,
+            .fn = ~str_replace(., "rt", "reaction_time"),
             .cols = matches('^rt|rt$'))
 
-rename_with(.fn = ~str_replace(., 'rt', 'reaction_time'),
+## we can change the order of arguments if we declare them explicitly
+rename_with(.fn = ~str_replace(., "rt", "reaction_time"),
             .data = blp_df,
             .cols = matches('^rt|rt$'))
 
+############################## END of first day ################################
 
-# Slicing with slice ------------------------------------------------------
+## Slicing with slice ----------------------------------------------------------
 
 slice(blp_df, 5)
 
@@ -192,38 +202,39 @@ slice(blp_df, 990:1000)
 slice(blp_df, 990:n())
 slice(blp_df, (n()-10):n())
 
-
-# Filtering with filter ---------------------------------------------------
+## Filtering with filter -------------------------------------------------------
 
 filter(blp_df, participant == 20)
 
-filter(blp_df, lex == 'W', resp == 'W')
+filter(blp_df, lex == "W", resp == "W")
 filter(blp_df, rt < 500)
 filter(blp_df, rt <= 500)
 
-# the following 
-filter(blp_df, lex == 'W', resp == 'W', rt <= 500)
-# is equivalent to this:
-filter(blp_df, (lex == 'W') & (resp == 'W') & (rt <= 500))
+## the following 
+filter(blp_df, lex == "W", resp == "W", rt <= 500)
+## is equivalent to this:
+filter(blp_df, (lex == "W") & (resp == "W") & (rt <= 500))
 
-# disjunction of conditions
-filter(blp_df, lex == 'W' | rt <= 500)
+## base R: blp_df[blp_df$lex == "W" & blp_df$resp == "W" & blp_df$rt <= 500, ] # (includes NAs!!)
 
-filter(blp_df, (lex == 'W') & (resp == 'W') | (rt <= 500))
-filter(blp_df, (lex == 'W') & (resp == 'W') | !(rt <= 500))
+## disjunction of conditions
+filter(blp_df, lex == "W" | rt <= 500)
 
-# filter where their response correct
+filter(blp_df, (lex == "W") & (resp == "W") | (rt <= 500))
+filter(blp_df, (lex == "W") & (resp == "W") | !(rt <= 500))
+
+## filter where their response is correct
 filter(blp_df, lex == resp)
 
-# find rows where there is at least one missing value
+## find rows where there is at least one missing value
 filter(blp_df, if_any(everything(), is.na))
 
 filter(blp_df, if_all(everything(), is.na))
 
-
+## dropping incomplete cases
 filter(blp_df, if_all(everything(), ~!is.na(.)))
 
-# by the way, you can also do ....
+## by the way, you can also do ....
 drop_na(blp_df)
 na.omit(blp_df)
 
@@ -234,21 +245,19 @@ na.omit(blp_df)
 # x <= 500
 # }
 
+filter(blp_df, if_all(matches("^rt|rt$"), ~ . <= 500))
+filter(blp_df, if_any(matches("^rt|rt$"), ~ . <= 500))
 
-filter(blp_df, if_all(matches('^rt|rt$'), ~ . <= 500))
-filter(blp_df, if_any(matches('^rt|rt$'), ~ . <= 500))
-
-# the previous if_all command is equivalent to this:
+## the previous if_all command is equivalent to this:
 filter(blp_df, rt <= 500, prev.rt <= 500, rt.raw <= 500)
 
-# the previous if_any command is equivalent to this:
+## the previous if_any command is equivalent to this:
 filter(blp_df, rt <= 500 | prev.rt <= 500 | rt.raw <= 500)
 
+## filtering when all numeric values are less than their median
 filter(blp_df, if_all(where(is.numeric), ~ . < median(., na.rm = TRUE)))
 
-
-
-# Create new variables with mutate ----------------------------------------
+## Create new variables with mutate --------------------------------------------
 
 mutate(blp_df, accuracy = lex == resp)
 
@@ -261,23 +270,26 @@ mutate(blp_df, rt = rt / 1000)
 mutate(blp_df,
        accuracy = lex == resp,
        fast_response = rt < 500,
-       rt = rt /1000)
+       rt = rt / 1000)
 
-# the previous code is different to 
+## the previous code is different to 
 mutate(blp_df,
        accuracy = lex == resp,
        rt = rt / 1000,
        fast_response = rt < 500)
 
-
-mutate(blp_df, 
+## converting a variable to a factor
+mutate(blp_df, lex = as.factor(lex))
+       
+## converting multiple columns to a factor
+mutate(blp_df,
        lex = as.factor(lex),
        spell = as.factor(spell),
-       resp = as.factor(resp)
-)
+       resp = as.factor(resp))
 
+## using across() with mutate()
+## across("which_columns", "do_what")
 mutate(blp_df, across(where(is.character), as.factor))
-
 
 re_scale <- function(x) as.vector(scale(x))
 
@@ -286,43 +298,41 @@ mutate(blp_df, across(where(is.numeric), ~ as.vector(scale(.)) ))
 
 
 mutate(blp_df, 
-       lex = recode(lex, 'W' = 'word', 'N' = 'nonword'))
+       lex = recode(lex, "W" = "word", "N" = "nonword"))
 
 mutate(blp_df,
        across(c(lex, resp), 
-              ~ recode(., 'W' = 'word', 'N' = 'nonword'))
-)
+              ~ recode(., "W" = "word", "N" = "nonword")))
 
+## one condition
 mutate(blp_df,
-       fast_response = if_else(rt < 500, 'fast', 'slow')
-)
+       fast_response = if_else(rt < 500, "fast", "slow"))
 
-mutate(blp_df,
-       rt_speed = case_when(
-         rt > 900 ~ 'slow',
-         rt < 500 ~ 'fast',
-         (rt >= 500) & (rt <= 900) ~ 'medium'
-       )
-)
-
+## > 1 condition
 mutate(blp_df,
        rt_speed = case_when(
-         rt > 900 ~ 'slow',
-         rt < 500 ~ 'fast',
-         TRUE ~ 'medium'
-       )
-)
+         rt > 900 ~ "slow",
+         rt < 500 ~ "fast",
+         (rt >= 500) & (rt <= 900) ~ "medium"
+       ))
 
+## "otherwise / else", use the value TRUE
+mutate(blp_df,
+       rt_speed = case_when(
+         rt > 900 ~ "slow",
+         rt < 500 ~ "fast",
+         TRUE ~ "medium"
+       ))
+
+## return only the mutated column
 transmute(blp_df,
           rt_speed = case_when(
-            rt > 900 ~ 'slow',
-            rt < 500 ~ 'fast',
-            TRUE ~ 'medium'
-          )
-)
+            rt > 900 ~ "slow",
+            rt < 500 ~ "fast",
+            TRUE ~ "medium"
+          ))
 
-
-# Sorting with arrange ----------------------------------------------------
+## Sorting with arrange --------------------------------------------------------
 
 arrange(blp_df, rt)
 arrange(blp_df, desc(rt))
@@ -330,12 +340,11 @@ arrange(blp_df, spell)
 arrange(blp_df, participant)
 arrange(blp_df, participant, rt)
 
-
-# Introducting the pipe ---------------------------------------------------
+## Introducting the pipe -------------------------------------------------------
 
 x <- c(2, 3, 5, 7, 11)
 
-# we want the log of the sum of the sqrt of the log of x
+## we want the log of the sum of the sqrt of the log of x
 log(x) # the log of x
 sqrt(log(x)) # the sqrt of the log of x
 sum(sqrt(log(x))) # sum of sqrt of log of x
@@ -347,28 +356,242 @@ x %>% log() %>% sqrt() # same thing, equivalent to sqrt(log(x))
 
 x %>% log() %>% sqrt() %>% sum() %>% log() # equiv to log(sum(sqrt(log(x))))
 
+## A data wrangling pipeline ---------------------------------------------------
 
-
-# A data wrangling pipeline -----------------------------------------------
-
-read_csv("https://raw.githubusercontent.com/mark-andrews/idwrt23/main/data/blp-trials-short.txt") %>% 
+# take the dataset, and then...
+blp_df %>% 
+  # convert `participant` to a factor and create the accuracy variable, and then...
   mutate(participant = as.factor(participant),
          accuracy = lex == resp) %>% 
-  # the next lines do renaming
+  # rename variables, and then...
   rename(subject = participant,
          stimulus = spell,
          reaction_time = rt) %>% 
+  # select variables, and then...
   select(subject, stimulus, lex, accuracy, reaction_time) %>% 
-  filter(lex == 'W', accuracy, 
+  # filter according to some rules, and then...
+  filter(lex == "W",
+         accuracy, 
          reaction_time < 1500 & reaction_time > 500) %>% 
-  na.omit()
-
+  # remove incomplete cases
+  drop_na()
 
 blp_df %>% 
   mutate(participant = as.factor(participant),
          accuracy = lex == resp) %>% 
+  # select does renaming as well
   select(subject = participant, 
          stimulus = spell, 
          lex, 
          accuracy, 
          reaction_time = rt)
+
+## long pipes aren't a problem, they are still readable
+## and you can comment in between to explain what each step is doing
+
+library(tidyverse)
+
+## Summary statistics with summarise -------------------------------------------
+
+summarise(blp_df, mean(rt, na.rm = TRUE))
+
+blp_df %>% 
+  drop_na() %>% 
+  summarise(avg = mean(rt),
+            med_rt_raw = median(rt.raw))
+
+blp_df %>% 
+  mutate(fast_rt = rt <= 500) %>%  
+  drop_na() %>% 
+  group_by(lex, fast_rt) %>% 
+  summarise(avg = mean(rt))
+
+blp_df %>% 
+  drop_na() %>% 
+  group_by(lex) %>% 
+  summarise(across(rt:rt.raw, median))
+
+blp_df %>% 
+  drop_na() %>% 
+  group_by(lex) %>% 
+  summarise(across(rt:rt.raw, list(median = median, mad = mad)))
+
+blp_df %>% 
+  drop_na() %>% 
+  summarise(across(rt:rt.raw, list(median = median, mad = mad)))
+
+############################## END of second day ###############################
+
+## Merging data frames ---------------------------------------------------------
+
+source("https://raw.githubusercontent.com/rafamoral/courses/main/data_wrangling/scripts/simple_df_eg.R")
+
+bind_rows(Df_1, Df_2)
+bind_rows(Df_2, Df_1)
+bind_cols(Df_1, Df_3)
+
+Df_a
+Df_b
+
+inner_join(Df_a, Df_b)
+left_join(Df_a, Df_b)
+right_join(Df_a, Df_b)
+left_join(Df_b, Df_a)
+full_join(Df_a, Df_b)
+
+anti_join(Df_a, Df_b)
+anti_join(Df_b, Df_a)
+semi_join(Df_a, Df_b)
+
+## let's get real
+blp_stimuli <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/data_wrangling/data/blp_stimuli.csv")
+## spell = word
+## bnc = frequency of the word usage per million
+## subtlex = frequency of word usage in a large database of movie subtitles
+
+left_join(blp_df, blp_stimuli)
+
+filter(blp_stimuli, spell == "staud")
+
+right_join(blp_df, blp_stimuli)
+right_join(blp_df, blp_stimuli) %>% tail(20)
+
+inner_join(blp_df, blp_stimuli)
+
+all.equal(inner_join(blp_df, blp_stimuli),
+          left_join(blp_df, blp_stimuli))
+
+Df_9 <- tibble(spell = c("cat", "dog"),
+               rt = c(100, 200))
+Df_10 <- tibble(spell = c("cat", "cat", "dog"),
+                old20 = c(5, 10, 20))
+
+left_join(Df_9, Df_10)
+
+Df_11 <- tibble(x = c(1, 2), y = c(42, 52))
+Df_12 <- tibble(x = c("1", "2"), z = c("foo", "bar"))
+
+left_join(Df_11, Df_12)
+
+Df_13 <- tibble(x = as.factor(c(1, 2)), y = c(42, 52))
+Df_14 <- tibble(x = c("1", "2"), z = c("foo", "bar"))
+
+left_join(Df_13, Df_14)
+
+inner_join(Df_4, Df_5)
+inner_join(Df_4, rename(Df_5, x = a))
+inner_join(Df_4, Df_5, by = c("x" = "a"))
+
+## Reading in multiple files ---------------------------------------------------
+
+library(fs)
+
+getwd()
+setwd("/Users/rafamoral/Dropbox/ONLINE_COURSES/courses/data_wrangling/data/exp_data")
+dir_ls() %>% map(read_csv) %>% bind_rows()
+dir_ls() %>% map_dfr(read_csv, .id = "subject")
+
+all_subjects <- dir_ls() %>% map_dfr(read_csv, .id = "subject")
+all_subjects
+
+all_subjects %>% pull(subject) %>% unique
+
+all_subjects <- all_subjects %>%
+  mutate(subject = str_extract(subject, "[1-9]"))
+
+all_subjects %>% pull(subject) %>% unique
+
+## Reshaping with pivots -------------------------------------------------------
+
+## experiment to recall negative, neutral, or positive memories
+recall_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/data_wrangling/data/repeated_measured_a.csv")
+
+recall_df_long <- recall_df %>%
+  pivot_longer(- Subject,
+               names_to = "condition",
+               values_to = "memory")
+
+recall_df_long %>%
+  pivot_wider(names_from = condition,
+              values_from = memory)
+
+recall_df_b <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/data_wrangling/data/repeated_measured_b.csv")
+
+## this pipeline 
+recall_df_b %>%
+  pivot_longer(- Subject,
+               names_to = "condition",
+               values_to = "memory") %>% 
+  separate(col = condition, 
+           into = c("cue", "emotion"),
+           sep = "_")
+
+## is equivalent to this one command
+recall_df_b %>%
+  pivot_longer(- Subject,
+               names_to = c("cue", "emotion"),
+               names_sep = "_",
+               values_to = "memory")
+
+## and also it is equivalent to this
+recall_df_b %>%
+  pivot_longer(- Subject,
+               names_to = c("cue", "emotion"),
+               names_pattern = "(.*)_(.*)",
+               values_to = "memory")
+## . = any character
+## * = any number of characters
+## (.*) = any number of characters of any kind
+
+blp_df_summ <- 
+  blp_df %>% 
+  drop_na() %>%
+  summarise(across(rt:rt.raw,
+                   list(median = median, mad = mad)))
+
+## this pipeline
+blp_df_summ %>%
+  pivot_longer(everything(),
+               names_to = "summary",
+               values_to = "value") %>% 
+  separate(summary,
+           into = c("var", "descriptive"),
+           sep = "_") %>% 
+  pivot_wider(names_from = descriptive,
+              values_from = value)
+
+## is equivalent to this
+blp_df_summ %>%
+  pivot_longer(everything(),
+               names_to = c("var", ".value"),
+               names_sep = "_")
+## .value = create two columns and pivot the second wide
+
+## Nesting ---------------------------------------------------------------------
+
+tidy_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/data_wrangling/data/example_1_tidy.csv")
+
+tidy_df %>%
+  group_by(subject) %>% 
+  summarise(accuracy = mean(accuracy))
+
+tidy_df %>%
+  group_by(subject) %>%
+  nest() %>%
+  mutate(number_of_rows = map_int(data, nrow)) %>%
+  select(- data)
+## map() always returns a list; map_int() returns integers
+
+## using `tidy_df` do a linear regression predicting `rt` from `delta`
+## and return the slope coefficents (which is second value of coef)
+coef(lm(rt ~ delta, data = tidy_df))[2]
+
+# Now do that same thing for each subject in the data set
+tidy_df %>% 
+  group_by(subject) %>% 
+  nest() %>% 
+  mutate(slope = map_dbl(data, ~coef(lm(rt ~ delta, data = .))[2])) %>% 
+  ungroup() %>%
+  select(- data)
+
+############################## END of third day ################################
