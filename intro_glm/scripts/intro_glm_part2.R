@@ -161,6 +161,15 @@ pchisq(deviance(fit2) - deviance(fit3), df = 3, lower.tail = FALSE)
 
 anova(fit2, fit3, test = 'Chisq')
 
+## note
+## for the poisson glm the deviance is calculated as
+## 2 * (logLik(saturated model) - logLik(current model))
+2*(sum(dpois(doctor_df$gp_visits, doctor_df$gp_visits, log = TRUE)) - logLik(fit3))
+deviance(fit3)
+- 2 * logLik(fit3)
+## although inconsistent, this doesn't change tests based on differences of deviances
+## because the logLik of the saturated model is a constant that is cancelled out
+
 ## loading the insurance dataset (offset example)
 insurance_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_glm/data/insurance.csv")
 insurance_df$District <- as.factor(insurance_df$District)
