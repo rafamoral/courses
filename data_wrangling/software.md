@@ -9,7 +9,6 @@ There are a few pieces of software to install:
     environment for using R.
 -   [tidyverse](https://www.tidyverse.org/): A bundle of R packages to
     use R the modern way.
--   Various R packages including `lme4`, `glmnet`, etc
 
 ## Installing R
 
