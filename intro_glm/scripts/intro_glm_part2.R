@@ -162,11 +162,13 @@ pchisq(deviance(fit2) - deviance(fit3), df = 3, lower.tail = FALSE)
 anova(fit2, fit3, test = 'Chisq')
 
 ## note
-## in R, for any glm, apart from the Bernoulli glm, the deviance is calculated as
+## the deviance is calculated as
 ## 2 * (logLik(saturated model) - logLik(current model))
 2*(sum(dpois(doctor_df$gp_visits, doctor_df$gp_visits, log = TRUE)) - logLik(fit3))
 deviance(fit3)
 - 2 * logLik(fit3)
+## for the Bernoulli model, logLik(saturated model) = 0, therefore D = - 2 * logLik(current model)
+## some packages use deviance = - 2 * logLik(current model) for all models
 ## although inconsistent, this doesn't change tests based on differences of deviances
 ## because the logLik of the saturated model is a constant that is cancelled out
 
