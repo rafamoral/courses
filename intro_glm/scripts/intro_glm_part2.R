@@ -162,7 +162,7 @@ pchisq(deviance(fit2) - deviance(fit3), df = 3, lower.tail = FALSE)
 anova(fit2, fit3, test = 'Chisq')
 
 ## note
-## for the poisson glm the deviance is calculated as
+## in R, for any glm, apart from the Bernoulli glm, the deviance is calculated as
 ## 2 * (logLik(saturated model) - logLik(current model))
 2*(sum(dpois(doctor_df$gp_visits, doctor_df$gp_visits, log = TRUE)) - logLik(fit3))
 deviance(fit3)
