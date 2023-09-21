@@ -8,7 +8,9 @@ There are a few pieces of software to install:
 -   [Rstudio](https://www.rstudio.com/): An integrated development
     environment for using R.
 -   [tidyverse](https://www.tidyverse.org/): A bundle of R packages to
-    use R the modern way.
+    use R the modern way, and including `ggplot2`.
+-   Additional packages to work with `ggplot2`
+-   [LaTeX](https://www.latex-project.org/): To make high quality reports with RMarkdown, we need to use LaTeX, which is software that is external to R. Unless you already use LaTeX, the easiest thing to do to use LaTeX in R is to install `tinytex`.
 
 ## Installing R
 
@@ -64,3 +66,31 @@ install.packages("tidyverse")
 The main packages that are contained within the
 [tidyverse](https://www.tidyverse.org/) bundle are listed
 [here](https://www.tidyverse.org/packages/).
+
+## Additional packages
+
+We will use a few other packages, which you can install by executing:
+
+```r
+install.packages(c("ggExtra", "cowplot", "ggrepel", "ggpubr"))
+```
+
+## Installing LaTeX using `tinytex`
+
+Unless you already use LaTeX and have it installed already, the easiest thing to do is to install `tinytex` as follows.
+```r
+install.packages("tinytex")
+tinytex::install_tinytex()
+```
+This installation will take some time. After it completes, you should restart RStudio.
+After you restart, type the following command (note the three `:`'s):
+```r
+tinytex:::is_tinytex()
+```
+
+Test that rmarkdown (which will have be installed by `tidyvese`) will render pdf documents using LaTeX with the following code.
+```r
+writeLines("Hello $x^2$", 'test.Rmd')
+rmarkdown::render("test.Rmd", output_format = "pdf_document")
+```
+If that worked, you should have a pdf document named `test.pdf` in your working directory.
