@@ -231,6 +231,12 @@ ggplot(swiss_df,
   geom_boxplot(width = 0.25, outlier.shape = NA, notch = TRUE) + 
   geom_jitter(width = 0.05, size = 0.75, alpha = 0.75)
 
+## violin variant
+ggplot(swiss_df,
+       mapping = aes(x = is_catholic, y = Fertility)) +
+  geom_violin() + 
+  geom_jitter(width = 0.05, size = 0.75, alpha = 0.75)
+
 ## Boxplots with two grouping variables
 
 ## VC = vitamin C pill; OJ = orange juice
@@ -611,13 +617,34 @@ p1 + theme(axis.title.x = element_text(size = 20))
 p1 + theme(axis.title.y = element_text(size = 20))
 p1 + theme(axis.title = element_text(size = 20, family = "mono"))
 
+## ggsave() --------------------------------------------------------------------
+
 ## saving as an image / pdf
 ## "Export" button, or
 ## ggsave(filename = "myplot.png", width = 6, height = 8, dpi = 300)
 
-## R Markdown tutorial
+## R Markdown tutorial ---------------------------------------------------------
 
 ## Combining ggplot objects as panels within a figure --------------------------
 
 library(ggpubr)
 
+panel1 <- p1 +
+  ggtitle("(a)")
+
+panel2 <- p2 +
+  geom_jitter(aes(color = gender),
+              alpha = .2) +
+  ggtitle("(b)")
+
+ggarrange(panel1, panel2)
+ggarrange(panel1, panel2, common.legend = TRUE)
+ggarrange(panel1, panel2, ncol = 1)
+
+panel1 <- panel1 +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+panel2 <- panel2 +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+ggarrange(panel1, panel2, ncol = 1)
