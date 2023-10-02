@@ -41,6 +41,10 @@ confint(fit2)
 affairs_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_glm/data/affairs.csv")
 affairs_df
 
+## affairs: number of affairs in the past year
+## religiousness: 1 (not religious) to 5 (very religious)
+## rating: self-rating of marriage (1 = very unhappy; 5 = very happy)
+
 affairs_df <- affairs_df %>%
   mutate(had_affair = affairs > 0)
 
@@ -151,7 +155,7 @@ deviance(fit4) - deviance(fit3)
 pchisq(deviance(fit4) - deviance(fit3), df = 1, lower.tail = FALSE)
 
 ## Alternatively
-anova(fit4, fit3, test = 'Chisq')
+anova(fit4, fit3, test = "Chisq")
 
 ## full model
 fit5 <- glm(had_affair ~ age + yearsmarried + religiousness + children + education,
@@ -167,7 +171,7 @@ fit6 <- glm(had_affair ~ age + yearsmarried + religiousness,
 anova(fit6, fit5, test = "Chisq")
 
 ## a series of tests dropping one predictor at a time
-drop1(fit5, test = 'Chisq')
+drop1(fit5, test = "Chisq")
 
 summary(fit5)
 

@@ -122,7 +122,7 @@ rpois(1000, lambda = rate_male_50)
 table(rpois(1000, lambda = rate_male_50))
 round(dpois(0:5, lambda = rate_male_50), 3)
 
-log_rate_female_50 - log_rate_male_50
+log_rate_female_50 - log_rate_male_50 ## same as estimates[2]
 
 c(rate_female_50, rate_male_50)
 rate_female_50 / rate_male_50
