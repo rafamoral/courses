@@ -168,3 +168,102 @@ delta_D <- deviance(fit3) - deviance(fit4)
 pchisq(delta_D, df = 3, lower.tail = FALSE)
 
 anova(fit3, fit4, test = "Chisq")
+
+# The Poisson GLM with an offset term -------------------------------------
+
+## loading the insurance data
+insurance_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_glm/data/insurance.csv")
+insurance_df
+
+insurance_df$Age <- factor(insurance_df$Age, levels = c("<25","25-29","30-35",">35"))
+
+## exploratory plots
+insurance_df %>%
+  ggplot(aes(x = Age, y = Claims)) +
+  theme_bw() +
+  geom_boxplot()
+
+insurance_df %>%
+  ggplot(aes(x = Age, y = Claims/Holders)) +
+  theme_bw() +
+  geom_boxplot()
+
+insurance_df %>%
+  ggplot(aes(x = Age, y = Holders)) +
+  theme_bw() +
+  geom_boxplot()
+
+## let's the Poisson model without the offset term
+fit5 <- glm(Claims ~ Age - 1,
+            family = poisson,
+            data = insurance_df)
+exp(coefficients(fit5))
+
+insurance_df %>%
+  group_by(Age) %>%
+  summarise(m = mean(Claims))
+
+fit5 <- glm(Claims ~ Age,
+            family = poisson,
+            data = insurance_df)
+coefficients(fit5)
+exp(2.2)
+## the Poisson model without the offset term estimates that people
+## older than 35 will have a 9-fold increase in the number of claims
+## made, when compared to people younger than 25
+
+## let's now include the offset term (which is the correct approach!!)
+fit6 <- glm(Claims ~ Age + offset(log(Holders)),
+            family = poisson,
+            data = insurance_df)
+
+drop1(fit5, test = "Chisq")
+drop1(fit6, test = "Chisq")
+
+coefficients(fit6)
+exp(- 0.5)
+## the Poisson model *with* the offset term estimates that people
+## older than 35 will have a **40% reduction** in the number of claims
+## made, when compared to people younger than 25
+
+newdata <- tibble(Age = levels(insurance_df$Age),
+                  Holders = 1000)
+
+add_predictions(data = newdata,
+                model = fit5,
+                type = "response")
+## the interpretation changes completely when we ignore the offset term
+
+add_predictions(data = newdata,
+                model = fit6,
+                type = "response")
+## this is the correct interpretation
+
+# Goodness-of-fit for Poisson models using the residual deviance ----------
+
+## load the progeny data
+library(hnp)
+data(progeny)
+progeny
+
+progeny %>%
+  ggplot(aes(x = extract, y = y)) +
+  theme_bw() +
+  geom_boxplot()
+
+fit7 <- glm(y ~ extract,
+            family = poisson,
+            data = progeny)
+summary(fit7)
+
+curve(dchisq(x, df = fit7$df.residual), xlim = c(0, 100))
+abline(v = 89.768, lty = 2)
+pchisq(89.768, 36, lower.tail = FALSE)
+
+qchisq(0.95, 36) ## critical value
+
+## half-normal plot with a simulated envelope
+hnp(fit7)
+hnp(fit7, how.many.out = TRUE)
+hnp(fit7, print.on = TRUE)
+hnp(fit7, paint.out = TRUE)
