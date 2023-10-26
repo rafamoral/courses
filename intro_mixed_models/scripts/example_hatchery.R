@@ -2,9 +2,7 @@ library(tidyverse)
 library(lme4)
 library(lmerTest)
 
-setwd("/Users/rafamoral/Dropbox/ONLINE_COURSES/courses/intro_mixed_models/scripts")
-
-otolith_df <- read_csv("../data/ChumOtolith_SampleData.csv")
+otolith_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_mixed_models/data/ChumOtolith_SampleData.csv")
 otolith_df <- otolith_df %>%
   mutate(FishID = factor(FishID),
          Sex = factor(Sex),
