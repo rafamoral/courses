@@ -224,3 +224,20 @@ summary(fit15)
 anova(fit13, fit14, fit15) ## beware! fit13 estimated a perfect correlation,
                            ## and fit14 has an estimate at the boundary of 
                            ## the parametric space (sigma2_1(c) = 0)
+
+## simplifying even further and fitting only random intercepts
+## at the school and class levels
+fit16 <- lmer(mathscore ~ ses + (1 | schoolid) + (1 | classid),
+              data = classroom_df)
+fit16b <- lmer(mathscore ~ ses + (1 | schoolid / classid2),
+               data = classroom_df)
+fit16c <- lmer(mathscore ~ ses + (1 | schoolid) + (1 | schoolid:classid2),
+               data = classroom_df)
+logLik(fit16)
+logLik(fit16b)
+logLik(fit16c)
+
+anova(fit15, fit16)
+summary(fit16b)
+
+anova(fit16)
