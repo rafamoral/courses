@@ -70,5 +70,5 @@ The main packages that are contained within the
 
 We need a number of extra R packages, which can be installed individually via the R package installer dialog, or else with the following command.
 ```r
-install.packages(c("glmnet", "rpart", "rpart.plot", "randomForest", "gamlss", "gamlss.add"))
+install.packages(c("ISLR", "glmnet", "rpart", "rpart.plot", "randomForest", "gamlss", "gamlss.add"))
 ```
