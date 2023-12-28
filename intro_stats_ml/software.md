@@ -68,7 +68,11 @@ The main packages that are contained within the
 
 ## Installing various R packages
 
-We need a number of extra R packages, which can be installed individually via the R package installer dialog, or else with the following command.
+We need a number of extra R packages, which can be installed individually via the R package installer dialog, or else with the following commands:
 ```r
-install.packages(c("ISLR", "glmnet", "rpart", "rpart.plot", "randomForest", "gamlss", "gamlss.add", "GGally"))
+install.packages(c("ISLR", "glmnet", "rpart", "rpart.plot", "randomForest", "gamlss", "gamlss.add", "GGally", "BiocManager", "dendextend"))
+
+BiocManager::install("graph")
+
+install.packages("PairViz")
 ```
