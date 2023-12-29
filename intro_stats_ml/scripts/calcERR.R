@@ -1,12 +1,12 @@
 calcERR <- function(prob,
                     trueClass,
-                    thresh = seq(0, 1, length.out = 60)) {
+                    thresh = seq(0, 1, length.out = 100)) {
   m <- length(thresh)
-  e <- vector(length=m)
-  edef <- vector(length=m)
-  enondef <- vector(length=m)
+  e <- vector(length = m)
+  edef <- vector(length = m)
+  enondef <- vector(length = m)
   
-  for (i in 1:m){
+  for(i in 1:m) {
     pred <- factor(ifelse(prob < thresh[i], "No", "Yes"),
                    levels = c("No", "Yes"))
     tab <- table(trueClass, pred)
