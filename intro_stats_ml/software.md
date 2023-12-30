@@ -70,7 +70,7 @@ The main packages that are contained within the
 
 We need a number of extra R packages, which can be installed individually via the R package installer dialog, or else with the following commands:
 ```r
-install.packages(c("ISLR", "glmnet", "GGally", "BiocManager", "dendextend", "splines", "class", "caret", "arm", "MLeval", "pROC", "gclus", "DendSer", "rpart", "rpart.plot", "randomForest", "gamlss", "gamlss.add"))
+install.packages(c("ISLR", "glmnet", "GGally", "BiocManager", "dendextend", "splines", "class", "caret", "arm", "MLeval", "pROC", "gclus", "seriation", "DendSer", "rpart", "rpart.plot", "randomForest", "gamlss", "gamlss.add"))
 
 BiocManager::install("graph")
 
