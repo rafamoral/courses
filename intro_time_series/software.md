@@ -70,5 +70,5 @@ The main packages that are contained within the
 
 We need a number of extra R packages, which can be installed individually via the R package installer dialog, or else with the following commands:
 ```r
-install.packages(c("fpp3"))
+install.packages(c("fpp3", "seasonal", "aimsir17", "forecast"))
 ```

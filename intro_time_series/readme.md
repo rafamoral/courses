@@ -4,13 +4,13 @@ In this three-day course, we provide a comprehensive practical and theoretical i
 
 ## Topics Covered
 
-**Topic 1:** Introductory concepts in statistical machine learning. Section 1: Introductory concepts in time series analysis. White noise, stationarity, autocovariance and autocorrelation.
+**Topic 1:** Introductory concepts in time series analysis. White noise, stationarity, autocovariance and autocorrelation.
 
 **Topic 2:** Useful plots in time series analysis. Time plots, seasonal plots, autocorrelation plots. Time series decomposition: additive and multiplicative using the fable package in R.
 
 **Topic 3:** Benchmark forecasting methods. The naïve, mean, drift, and seasonal naïve methods.
 
-**Topic 4:** Exponential smoothing. Simple exponential smoothing, Holt’s linear method, Holt-Winters seasonal method, and fable’s general ETS method.
+**Topic 4:** Exponential smoothing. Simple exponential smoothing, Holt's linear method, Holt-Winters seasonal method, and fable's general ETS method.
 
 **Topic 5:** Autoregressive (AR) and moving-average (MA) models. Unit root tests for stationarity. How to identity the order of an AR(p) or an MA(q) model using autocorrelation and partial autocorrelation plots.
 
