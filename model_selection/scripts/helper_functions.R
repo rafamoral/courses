@@ -81,6 +81,11 @@ glm_loo_cv <- function(m, deviance_scale = FALSE) {
   
   if (deviance_scale) s <- -2 * s
   
-  return(sum(s))
+  if(!se) {
+    return(sum(s))
+  } else {
+    return(c(elpd = sum(s),
+             se = sqrt(length(s)) * sd(s)))
+  }
   
 }
