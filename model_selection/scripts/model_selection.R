@@ -245,7 +245,9 @@ deviance(fit8) - deviance(fit9)
 summary(fit9)
 
 ## deviance comparison in glm's using a chi-squared test
-anova(fit8, fit9, test = "Chisq")
+anova(fit8, fit9, test = "Chisq") ## bear in mind this is not "anova" per se
+                                  ## it is a generic function now, and is doing
+                                  ## different things depending on the object
 
 ## p-value manually calculated
 pchisq(deviance(fit8) - deviance(fit9), df = 1, lower.tail = F)
@@ -296,6 +298,8 @@ anova(fit10, fit11, fit13, fit15)
 anova(fit10, fit12, fit13, fit15)
 anova(fit10, fit12, fit14, fit15)
 
+## end of part 3 ##
+
 ## Out-of-Sample Predictive Performance ----------------------------------------
 
 source("https://raw.githubusercontent.com/rafamoral/courses/main/model_selection/scripts/helper_functions.R")
@@ -318,18 +322,18 @@ housing_df %>%
   geom_histogram(bins = 50, col = "white", lwd = .2)
 
 ## normal model
-fit16 <- lm(price ~ 1, data = housing_df)
-## lognormal model
-fit17 <- lm(logprice ~ 1, data = housing_df)
+fit16 <- glm(price ~ 1, data = housing_df)
+## gamma model
+fit17 <- glm(price ~ 1, family = Gamma(link = "log"), data = housing_df)
 
-lm_loo_cv(fit16)
-lm_loo_cv(fit17)
+glm_loo_cv(fit16)
+glm_loo_cv(fit17)
 
 # deviance scale
-lm_loo_cv(fit16, deviance_scale = TRUE) # -2 * elpd of fit16
-lm_loo_cv(fit17, deviance_scale = TRUE) # -2 * elpd of fit17
+glm_loo_cv(fit16, deviance_scale = TRUE) # -2 * elpd of fit16
+glm_loo_cv(fit17, deviance_scale = TRUE) # -2 * elpd of fit17
 
-lm_loo_cv(fit16, deviance_scale = TRUE) - lm_loo_cv(fit17, deviance_scale = TRUE)
+glm_loo_cv(fit16, deviance_scale = TRUE) - glm_loo_cv(fit17, deviance_scale = TRUE)
 
 ## AIC
 ## AIC \approx. -2 * elpd, however the approx doesn't hold well for more complex models
@@ -342,11 +346,12 @@ AIC(fit16) # using built in AIC
 AIC(fit17)
 
 ## estimate standard errors for elpd
-lm_loo_cv(fit16, deviance_scale = TRUE, se = TRUE)
-lm_loo_cv(fit17, deviance_scale = TRUE, se = TRUE)
+glm_loo_cv(fit16, deviance_scale = TRUE, se = TRUE)
+glm_loo_cv(fit17, deviance_scale = TRUE, se = TRUE)
 ## can do the same for AIC using bootstrap, for instance
 ## WAIC will give you se's as well
 ## important to take into account uncertainty when using threshold rules
+## but what we really want to know is the se of the difference!
 
 ## Small sample correction
 
