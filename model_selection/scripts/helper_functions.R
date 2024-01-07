@@ -56,7 +56,7 @@ get_rsq <- function(m) summary(m)$r.sq
 get_rss <- function(m) sum(residuals(m)^2)
 get_adjrsq <- function(m) summary(m)$adj.r.sq
 
-glm_loo_cv <- function(m, deviance_scale = FALSE) {
+glm_loo_cv <- function(m, se = FALSE, deviance_scale = FALSE) {
   
   data_df <- m$model
   fam <- m$family[1]$family
