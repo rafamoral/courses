@@ -201,6 +201,9 @@ fit6 <- lm(Fertility ~ Agriculture + Education + Catholic, data = swiss)
 fit6a <- lm(Fertility ~ Catholic + Agriculture + Education, data = swiss)
 anova(fit6a)
 
+## summary(model) is equivalent to drop1 (t stat = sqrt(F))
+## however drop1 useful when df > 1
+
 ## which order to choose? caution! type I is not really advised for main effects
 
 ## end of section 2 / day 1 ##
@@ -351,7 +354,22 @@ glm_loo_cv(fit17, deviance_scale = TRUE, se = TRUE)
 ## can do the same for AIC using bootstrap, for instance
 ## WAIC will give you se's as well
 ## important to take into account uncertainty when using threshold rules
-## but what we really want to know is the se of the difference!
+
+## but what we really want to know is the se of the difference
+AIC(fit16) - AIC(fit17)
+
+boot_diff <- function() {
+  y_boot <- sample(housing_df$price, nrow(housing_df), replace = TRUE)
+  fit1_boot <- glm(y_boot ~ 1)
+  fit2_boot <- glm(y_boot ~ 1, family = Gamma(link = "log"))
+  AIC_diff <- AIC(fit1_boot) - AIC(fit2_boot)
+  return(AIC_diff)
+}
+
+all_diffs <- replicate(5000, boot_diff())
+mean(all_diffs)
+sd(all_diffs)
+quantile(all_diffs, c(.025, .975))
 
 ## Small sample correction
 
@@ -406,6 +424,8 @@ vocab_df %>%
 ## replace poly with ns
 ## show that with df = 71 it is a saturated model
 
+## end of section 4 / day 2 ##
+
 stats_vocab$AICc
 akaike_weights(stats_vocab$AICc) %>% round(2)
 akaike_weights(stats_vocab$AICc) %>% sum
@@ -435,17 +455,24 @@ vocab_df %>%
   geom_line(aes(y = pred)) +
   geom_line(aes(y = wpred), col = 2)
 
+## we average predictions, not coefficients!
+## example with swiss data, interpretation of multiple betas (other coveriates held constant)
+## vs single beta (averaging over all the other covariates)
+
 ## Variable Selection ----------------------------------------------------------
 
 ## reading student dataset
 student_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/model_selection/data/student.csv")
 student_df
 
+## Pstats = parent status
+## Medu / Fedu = mother / father's educational status
+
 fit18 <- lm(math ~ ., data = student_df)
 
 fit18_step_back <- step(fit18,
                         direction = "backward")
-AIC(fit18) # notice how this is different to the reported AIC in step (dropping constant terms)
+AIC(fit18) # notice how this is different to the reported AIC in step (dropping constant terms in likelihood)
 
 fit19 <- lm(math ~ 1, data = student_df)
 fit19_step_forward <- step(fit19,
@@ -460,7 +487,10 @@ fit21_step_both <- step(fit19,
                         direction = "both",
                         scope = formula(fit18))
 
-2^27
+2^26 ## number of models to consider (excluding interactions!)
+
+choose(26,2)
+2^(26 + 325)
 
 ## all subsets regression
 library(MuMIn)
@@ -469,9 +499,12 @@ fit22 <- lm(Fertility ~ .,
             data = swiss,
             na.action = "na.fail")
 fit22_all_subsets <- dredge(fit22)
+fit22_all_subsets
 
 conf_set <- get.models(fit22_all_subsets, cumsum(weight) < 0.95)
 conf_set
+
+## end of section 5 ##
 
 ## regularisation
 
@@ -602,3 +635,5 @@ fit32
 wp(fit32)
 
 AIC(fit32)
+
+## end of section 6 / day 3 ##
