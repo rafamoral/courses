@@ -101,7 +101,9 @@ logLik(fit2)
 logLik(fit2) - logLik(fit1)
 (log(RSS_fit2) - log(RSS_fit1)) * (- n / 2)
 
-## RMSE
+## end of part 1 ##
+
+## RMSE (also translates as uncertainty)
 
 sqrt(mean(residuals(fit1)^2))
 sqrt(mean(residuals(fit2)^2))
@@ -146,6 +148,12 @@ y <- cars_df$z
 p <- predict(fit3, type = "response")
 sign(y - p) * sqrt(- 2 * (y * log(p) + (1 - y) * log(1 - p)))
 
+## so far we looked at in sample statistics
+## we now look at hypothesis tests for likelihood ratios, then
+## we turn to out-of-sample methods (how well does the model generalise to
+## the infinite number of samples we can get from the same population/model?)
+## loglik is an estimate, so there is uncertainty about it as well
+
 ## Nested Model Comparisons ----------------------------------------------------
 
 fit5 <- lm(Fertility ~ Agriculture + Education, data = swiss)
@@ -159,6 +167,9 @@ RSS_6
 
 (RSS_5 - RSS_6) / RSS_6
 
+## that can be referred to as an "effect size", which multiplied
+## by df1/(df0 - df1) (a sample effect), gives the F statistic
+
 ## Null hypothesis test on model fits of nested models
 anova(fit5, fit6)
 
@@ -169,13 +180,17 @@ anova(fit5, fit6)
 logLik(fit6) - logLik(fit5)
 
 ## drop1 nested model comparison
+drop1(fit6, scope = ~ Catholic, test = "F")
+drop1(fit6, scope = ~ Agriculture, test = "F")
+
 drop1(fit6, test = "F")
 
 sum(residuals(lm(Fertility ~ Education + Catholic, data = swiss))^2)
 sum(residuals(lm(Fertility ~ Agriculture + Catholic, data = swiss))^2)
 sum(residuals(lm(Fertility ~ Agriculture + Education, data = swiss))^2)
 
-## Sequential anova: Type I sums of squares
+## Sequential anova: Type I (sequential) sums of squares
+## (type II = drop1)
 anova(fit6)
 sum(residuals(lm(Fertility ~ 1, data = swiss))^2) - sum(residuals(lm(Fertility ~ Agriculture, data = swiss))^2)
 sum(residuals(lm(Fertility ~ Agriculture, data = swiss))^2) - sum(residuals(lm(Fertility ~ Agriculture + Education, data = swiss))^2)
@@ -186,14 +201,25 @@ fit6 <- lm(Fertility ~ Agriculture + Education + Catholic, data = swiss)
 fit6a <- lm(Fertility ~ Catholic + Agriculture + Education, data = swiss)
 anova(fit6a)
 
+## which order to choose? caution! type I is not really advised for main effects
+
+## end of section 2 / day 1 ##
+
 ## proportion decrease in error
 (RSS_5 - RSS_6) / RSS_5
 fit7 <- lm(Fertility ~ 1, data = swiss) # null model
 RSS_7 <- sum(residuals(fit7)^2)
 
 (RSS_7 - RSS_6) / RSS_7 # R^2 of fit6
+## R^2 is a measure that compares the model that you're fitting to the null model
 
 anova(fit7, fit6) # global test
+
+summary(fit6)
+cor(swiss$Fertility, fitted(fit6)) ^ 2
+
+## Adjusted R^2
+1 - sum(resid(fit6)^2)/sum((swiss$Fertility - mean(swiss$Fertility))^2)*46/43
 
 ## Nested model comparison in GLMs
 
@@ -536,8 +562,38 @@ fit29 <- brm(Reaction ~ Days + (Days | Subject),
              family = student(),
              data = sleep_df)
 
-waic(M27)
-waic(M28)
-waic(M29)
+waic(fit27)
+waic(fit28)
+waic(fit29)
 
-loo_compare(waic(M27), waic(M28), waic(M29))
+loo_compare(waic(fit27), waic(fit28), waic(fit29))
+
+# gamlss ------------------------------------------------------------------
+
+library(gamlss)
+
+## US air pollution data
+?usair
+names(usair) <- c("SO2","temperature","manufacturers",
+                  "population","wind_speed","rainfall","rain_days")
+
+fit30 <- gamlss(SO2 ~ .,
+                sigma.formula = ~ .,
+                family = NO,
+                data = usair)
+wp(fit30)
+
+fit31 <- gamlss(SO2 ~ .,
+                sigma.formula = ~ .,
+                family = GA,
+                data = usair)
+wp(fit31)
+
+AIC(fit30)
+AIC(fit31)
+
+fit32 <- stepGAICAll.A(fit31)
+fit32
+wp(fit32)
+
+AIC(fit32)
