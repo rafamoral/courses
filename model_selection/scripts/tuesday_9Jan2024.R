@@ -196,3 +196,32 @@ anova(fit6a)
 
 drop1(fit6, test = "F")
 drop1(fit6a, test = "F")
+
+## R^2: proportional decrease in error
+## fitting the NULL model
+fit7 <- lm(Fertility ~ 1, data = swiss)
+RSS_7 <- sum(residuals(fit7)^2)
+
+(RSS_7 - RSS_6) / RSS_7
+## R^2 is a measure that compares the model you are fitting ("current" model)
+## to the null model (i.e. how much variability have we explained when
+## we add the covariates?)
+## if we continue to add covariates, R^2 will continue to increase
+
+## Adjusted R^2
+y <- swiss$Fertility
+ybar <- mean(swiss$Fertility)
+TSS <- sum((y - ybar)^2)
+
+1 - RSS_6/TSS * 46 / 43
+
+summary(fit6)
+
+## R^2 as the correlation between observed and fitted values
+yhat <- predict(fit6)
+cor(y, yhat)^2 ## this is the R^2
+
+## global test
+fit7 ## null model
+fit6 ## model including agriculture, education and catholic
+anova(fit7, fit6)
