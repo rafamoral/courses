@@ -426,6 +426,8 @@ vocab_df %>%
 
 ## end of section 4 / day 2 ##
 
+## Model averaging -------------------------------------------------------------
+
 stats_vocab$AICc
 akaike_weights(stats_vocab$AICc) %>% round(2)
 akaike_weights(stats_vocab$AICc) %>% sum
