@@ -261,3 +261,39 @@ vocab_df %>%
   theme_bw() +
   geom_point() +
   geom_line(aes(y = pred), col = 4)
+
+# Model averaging ---------------------------------------------------------
+
+stats_vocab_splines$AICc
+stats_vocab_splines %>%
+  mutate(akaike_weights = akaike_weights(AICc) %>% round(2))
+
+sum(akaike_weights(stats_vocab_splines$AICc))
+
+vocab_df_pred <- vocab_df
+
+for(i in 1:20) {
+  vocab_df_pred <- vocab_df_pred %>%
+    add_predictions(model = lm(vocab ~ ns(age, i),
+                               data = vocab_df),
+                    var = paste("df =", i))
+}
+
+all_pred <- vocab_df_pred %>%
+  select(- age, - vocab) %>%
+  as.matrix
+
+vocab_df$wpred <- (t(all_pred) * akaike_weights(stats_vocab_splines$AICc)) %>%
+  colSums
+
+vocab_df %>%
+  add_predictions(model = lm(vocab ~ ns(age, 6),
+                             data = vocab_df),
+                  var = "pred") %>%
+  ggplot(aes(x = age, y = vocab)) +
+  theme_bw() +
+  geom_point() +
+  geom_line(aes(y = pred), col = 4) +
+  geom_line(aes(y = wpred), col = 2)
+
+## we average the predictions, not the coefficients!
