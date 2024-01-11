@@ -610,30 +610,107 @@ loo_compare(waic(fit27), waic(fit28), waic(fit29))
 
 library(gamlss)
 
+insect_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/model_selection/data/insect_diet.csv")
+insect_df <- na.omit(insect_df)
+
+insect_df %>%
+  ggplot(aes(x = day, y = weight)) +
+  geom_point() +
+  theme_bw() +
+  facet_wrap(~ diet)
+
+## comparing weights at day 14
+
+day14_df <- insect_df %>%
+  filter(day == 14)
+
+day14_df %>%
+  ggplot(aes(x = diet, y = weight)) +
+  theme_bw() +
+  geom_boxplot()
+
+fit30 <- lm(weight ~ diet, data = day14_df)
+anova(fit30)
+summary(fit30)
+
+fit31 <- gamlss(weight ~ diet, data = day14_df)
+
+## fitting a model with heterogeneous variances
+fit32 <- gamlss(weight ~ diet,
+                sigma.formula = ~ diet,
+                data = day14_df)
+summary(fit32)
+
+AIC(fit31)
+AIC(fit32)
+
+day14_df <- day14_df %>%
+  mutate(diet2 = factor(diet))
+levels(day14_df$diet2) <- c(1,2,1)
+
+fit33 <- gamlss(weight ~ diet,
+                sigma.formula = ~ diet2,
+                data = day14_df)
+
+AIC(fit32)
+AIC(fit33)
+
+## heterogeneous variances over time
+anticarsia_df <- insect_df %>%
+  filter(diet == "ag")
+
+anticarsia_df %>%
+  ggplot(aes(x = day, y = weight)) +
+  geom_point() +
+  theme_bw()
+
+anticarsia_df %>%
+  mutate(pred = predict(gamlss(weight ~ ns(day, 4),
+                               data = anticarsia_df))) %>%
+  ggplot(aes(x = day, y = weight)) +
+  geom_point() +
+  theme_bw() +
+  geom_line(aes(y = pred))
+
+fit34 <- gamlss(weight ~ ns(day, 4),
+                data = anticarsia_df)
+plot(fit34)
+wp(fit34)
+
+fit35 <- gamlss(weight ~ ns(day, 4),
+                sigma.formula = ~ day,
+                data = anticarsia_df)
+plot(fit35)
+wp(fit35)
+
+AIC(fit34)
+AIC(fit35)
+
 ## US air pollution data
 ?usair
 names(usair) <- c("SO2","temperature","manufacturers",
                   "population","wind_speed","rainfall","rain_days")
 
-fit30 <- gamlss(SO2 ~ .,
+fit36 <- gamlss(SO2 ~ .,
                 sigma.formula = ~ .,
                 family = NO,
                 data = usair)
-wp(fit30)
+plot(fit36)
+wp(fit36)
 
-fit31 <- gamlss(SO2 ~ .,
+fit37 <- gamlss(SO2 ~ .,
                 sigma.formula = ~ .,
                 family = GA,
                 data = usair)
-wp(fit31)
+plot(fit37)
+wp(fit37)
 
-AIC(fit30)
-AIC(fit31)
+AIC(fit36)
+AIC(fit37)
 
-fit32 <- stepGAICAll.A(fit31)
-fit32
-wp(fit32)
+fit38 <- stepGAICAll.A(fit37)
+fit38
 
-AIC(fit32)
+AIC(fit38)
 
 ## end of section 6 / day 3 ##
