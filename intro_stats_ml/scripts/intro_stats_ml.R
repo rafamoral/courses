@@ -108,7 +108,7 @@ axis(2)
 
 stars(educ_df, nrow = 3, col.stars = 1:18)
 
-d <- dist(educ, "euclidean")
+d <- dist(educ_df, "euclidean")
 h <- hclust(d, "single")
 
 d1 <- as.dendrogram(h)
