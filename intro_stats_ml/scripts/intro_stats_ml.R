@@ -205,6 +205,15 @@ summary(p)
 source("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml/scripts/screeplot.R")
 screeplot(p)
 
+# remotes::install_github("vqv/ggbiplot")
+library(ggbiplot)
+
+ggbiplot(p,
+         labels = state.abb,
+         groups = state.region,
+         ellipse = TRUE) +
+  theme_bw()
+
 ## Example: Olympic Decathlon Data
 olympic <- read.table("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml/data/olympic88.txt",
                       header = TRUE, check.names = FALSE)
