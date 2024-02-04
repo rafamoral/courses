@@ -1,6 +1,5 @@
 library(tidyverse)
 
-
 # Introduction and terminology --------------------------------------------
 
 ## white noise
@@ -182,7 +181,7 @@ head(ma5table)
 tail(ma5table)
 
 ## we can use the slide_dbl function to create sliding windows
-ma5 <- slider::slide_dbl(y, mean,
+ma5 <- slider::slide_dbl(exp_ire, mean,
                          .before = 2, .after = 2,
                          .complete = TRUE)
 

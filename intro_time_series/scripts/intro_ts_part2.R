@@ -26,6 +26,10 @@ fit %>%
   filter(Country == "Ireland") %>%
   report
 
+fit %>%
+  filter(Country == "Ireland") %>%
+  tidy
+
 ## Forecast
 fit %>% forecast(h = "3 years")
 
@@ -46,6 +50,9 @@ house_reg <- read.csv("https://raw.githubusercontent.com/rafamoral/courses/main/
   dplyr::select(Year, Quarter, YearQuarter, VALUE) %>%
   as_tibble
 names(house_reg)[4] <- c("Registrations")
+
+## or
+house_reg <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_time_series/data/house_reg_dublin.csv")
 
 house_reg <- house_reg %>%
   as_tsibble(index = YearQuarter)
