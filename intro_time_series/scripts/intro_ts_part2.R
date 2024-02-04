@@ -55,6 +55,7 @@ names(house_reg)[4] <- c("Registrations")
 house_reg <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_time_series/data/house_reg_dublin.csv")
 
 house_reg <- house_reg %>%
+  mutate(YearQuarter = yearquarter(YearQuarter)) %>%
   as_tsibble(index = YearQuarter)
 
 house_reg %>%
@@ -104,16 +105,16 @@ beer_fit <- train %>%
 beer_fc <- beer_fit %>% forecast(h = 14)
 ## Plot forecasts against actual values
 autoplot(beer_fc)
-autoplot(beer_fc, data = beer)
+autoplot(beer_fc, data = aus_production)
 autoplot(beer_fc, data = train)
 
 beer_fc %>%
-  autoplot(data = train, level = NULL) +
+  autoplot(data = train, level = NULL) + ## training data + forecasts
   autolayer(filter_index(aus_production, "2007 Q1" ~ .),
-            colour = "black", lty = 2) +
+            colour = "black", lty = 2) + ## adding true values
   labs(y = "Megalitres",
        title = "Forecasts for quarterly beer production") +
-  guides(colour = guide_legend(title = "Forecast")) +
+  guides(colour = guide_legend(title = "Method")) +
   theme_bw()
 
 ## Comparing methods -- example 2: google stock
@@ -210,6 +211,8 @@ google_2015 %>%
   guides(colour = "none")
 
 fc <- fit %>% forecast(h = 30, times = 5000, bootstrap = TRUE)
+## bootstrap = TRUE to sample from residuals
+## bootstrap = FALSE to sample from assumed distribution
 
 autoplot(fc, google_2015) +
   labs(title="Google daily closing stock price", y="$US") +
@@ -346,7 +349,8 @@ www_usage %>%
         Holt = ETS(value ~ error("A") + trend("A") + season("N")),
         Damped = ETS(value ~ error("A") + trend("Ad") + season("N"))) %>%
   forecast(h = 1) %>%
-  accuracy(www_usage)
+  accuracy(www_usage) %>%
+  arrange(RMSE)
 
 fit <- www_usage %>%
   model(Damped = ETS(value ~ error("A") + trend("Ad") + season("N")))

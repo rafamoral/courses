@@ -198,7 +198,7 @@ h02 %>%
 
 
 fit <- h02 %>%
-  model(arima014013 = ARIMA(log(Cost) ~ 0 + pdq(0,1,4) + PDQ(0,1,3)),
+  model(arima014012 = ARIMA(log(Cost) ~ 0 + pdq(0,1,4) + PDQ(0,1,2)),
         auto = ARIMA(log(Cost)),
         search = ARIMA(log(Cost), stepwise = FALSE))
 fit
@@ -210,7 +210,7 @@ glance(fit) %>%
 ## RMSE selection
 h02 %>%
   stretch_tsibble(.init = 180) %>%
-  model(arima014013 = ARIMA(log(Cost) ~ 0 + pdq(0,1,4) + PDQ(0,1,3)),
+  model(arima014012 = ARIMA(log(Cost) ~ 0 + pdq(0,1,4) + PDQ(0,1,2)),
         arima210011 = ARIMA(log(Cost) ~ 0 + pdq(2,1,0) + PDQ(0,1,1)),
         arima213011 = ARIMA(log(Cost) ~ 0 + pdq(2,1,3) + PDQ(0,1,1))) %>%
   forecast(h = 1) %>%
