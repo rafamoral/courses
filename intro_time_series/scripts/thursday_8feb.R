@@ -219,6 +219,7 @@ queensland_bulls <- aus_livestock %>%
          State == "Queensland") %>%
   select(- Animal, - State) %>%
   mutate(year = year(Month),
+         month  = month(Month),
          time = 1:n())
 
 queensland_bulls %>%
@@ -231,7 +232,7 @@ queensland_bulls_test <- queensland_bulls %>%
 
 queensland_bulls %>% autoplot()
 
-fit <- gam(Count ~ s(time, k = 30) + s(year, bs = "cc"),
+fit <- gam(Count ~ s(time, k = 30) + s(month, bs = "cc"),
            family = poisson,
            data = queensland_bulls_train)
 summary(fit)
@@ -244,7 +245,7 @@ queensland_bulls %>%
   geom_line(data = queensland_bulls_test, col = 4) +
   geom_line(aes(y = pred), col = 2)
 
-fit2 <- gam(Count ~ te(time, year, bs = "cc"),
+fit2 <- gam(Count ~ te(time, month),
             family = poisson,
             data = queensland_bulls_train)
 summary(fit2)
@@ -258,9 +259,9 @@ queensland_bulls %>%
   geom_line(aes(y = pred), col = 2)
 
 AIC(fit)
-AIC(fit2)
+AIC(fit2) ## tensor-type model is not a superior fit
 
-fit3 <- gamm(Count ~ te(time, year, bs = "cc"),
+fit3 <- gamm(Count ~ s(time, k = 30) + s(month, bs = "cc"),
              family = poisson,
              data = queensland_bulls_train,
              correlation = corARMA(form = ~ 1 | year, p = 1))
@@ -272,14 +273,13 @@ queensland_bulls %>%
   geom_line(data = queensland_bulls_test, col = 4) +
   geom_line(aes(y = pred), col = 2)
 
-AIC(fit2)
+AIC(fit)
 AIC(fit3$lme)
 
-fit4 <- gamm(Count ~ te(time, year, bs = "cc"),
+fit4 <- gamm(Count ~ s(time, k = 30) + s(month, bs = "cc"),
              family = poisson,
              data = queensland_bulls_train,
              correlation = corARMA(form = ~ 1 | year, p = 2))
-summary(fit4$lme)
 
 queensland_bulls %>%
   mutate(pred = predict(fit4$gam, newdata = queensland_bulls, type = "response")) %>%
@@ -288,4 +288,49 @@ queensland_bulls %>%
   geom_line(aes(y = pred), col = 2)
 
 AIC(fit3$lme)
-AIC(fit4$lme) ## did not improve
+AIC(fit4$lme) ## improvement with AR(2) structure
+
+fit5 <- gamm(Count ~ s(time, k = 30) + s(month, bs = "cc"),
+             family = poisson,
+             data = queensland_bulls_train,
+             correlation = corARMA(form = ~ 1 | year, p = 2, q = 2))
+
+queensland_bulls %>%
+  mutate(pred = predict(fit5$gam, newdata = queensland_bulls, type = "response")) %>%
+  autoplot(Count) +
+  geom_line(data = queensland_bulls_test, col = 4) +
+  geom_line(aes(y = pred), col = 2)
+
+AIC(fit4$lme)
+AIC(fit5$lme) ## improvement with ARMA(2,2) structure
+
+## comparing performances on test set
+
+queensland_bulls_test <- queensland_bulls_test %>%
+  mutate(no_corr = predict(fit, queensland_bulls_test, type = "response"),
+         ar1 = predict(fit3$gam, queensland_bulls_test, type = "response"),
+         ar2 = predict(fit4$gam, queensland_bulls_test, type = "response"),
+         arma22 = predict(fit5$gam, queensland_bulls_test, type = "response"))
+
+queensland_bulls_test %>%
+  pivot_longer(6:9,
+               names_to = "model",
+               values_to = "pred") %>%
+  ggplot(aes(x = time, y = Count)) +
+  theme_bw() +
+  geom_line() +
+  geom_line(aes(y = pred), col = 4, lty = 2) +
+  facet_wrap(~ model)
+
+## forecast error
+queensland_bulls_test %>%
+  as_tibble() %>%
+  pivot_longer(6:9,
+               names_to = "model",
+               values_to = "pred") %>%
+  group_by(model) %>%
+  summarise(RMSE = sqrt(sum(pred - Count)^2)) %>%
+  arrange(RMSE)
+
+## conclusion: ARMA(2,2) model shows superior forecast performance
+##             in the validation set
