@@ -1,5 +1,7 @@
 ## Advancing with R: An Introduction to Statistical Modelling
 
+x
+
 This course is designed to provide attendees with a comprehensive understanding of statistical modelling and its applications in various fields, such as ecology, biology, sociology, agriculture, and health. We cover all foundational aspects of modelling, including all coding aspects, ranging from data wrangling, visualisation and exploratory data analysis, to generalized linear mixed models, assessing goodness-of-fit and carrying out model comparison.
 
 ### Data wrangling
