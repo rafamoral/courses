@@ -1,5 +1,5 @@
 ## give a short intro to R Studio, the different windows etc
-## tidyverse, a package of packages (16)
+## tidyverse, a package of packages
 ## how to read raw data from github; careful not to read the html page
 
 ## load the tidyverse suite of packages
@@ -82,7 +82,7 @@ select(blp_df, ends_with("t"))
 select(blp_df, contains("rt"))
 
 select(blp_df, ends_with("T"))
-select(blp_df, ends_with("T", ignore.case = FALSE))
+select(blp_df, ends_with("T", ignore.case = FALSE)) ## case-sensitive
 
 ## RegEx matching (regexr.com)
 select(blp_df, matches("^rt"))     ## equivalent to starts_with
@@ -108,9 +108,6 @@ has_high_mean <- function(x) {
 }
 
 select(blp_df, where(has_high_mean))
-
-#has_high_mean(participant)
-#has_high_mean(lex)
 
 ## anonymous function
 select(blp_df, where(function(x) {
@@ -182,8 +179,6 @@ rename_with(.fn = ~str_replace(., "rt", "reaction_time"),
             .data = blp_df,
             .cols = matches('^rt|rt$'))
 
-############################## END of first day ################################
-
 ## Slicing with slice ----------------------------------------------------------
 
 slice(blp_df, 5)
@@ -232,7 +227,7 @@ filter(blp_df, if_any(everything(), is.na))
 filter(blp_df, if_all(everything(), is.na))
 
 ## dropping incomplete cases
-filter(blp_df, if_all(everything(), ~!is.na(.)))
+filter(blp_df, if_all(everything(), ~!is.na(.))) # filter for rows where everything is not NA
 
 ## by the way, you can also do ....
 drop_na(blp_df)
@@ -277,6 +272,17 @@ mutate(blp_df,
        accuracy = lex == resp,
        rt = rt / 1000,
        fast_response = rt < 500)
+## we can use newly defined variables within a single mutate call
+## not possible in base R
+data.frame(blp_df,
+           accuracy = blp_df$lex == blp_df$resp,
+           rt2 = blp_df$rt * 2,
+           fast_response = rt2 < 500)
+
+mutate(blp_df,
+       accuracy = lex == resp,
+       rt2 = blp_df$rt * 2,
+       fast_response = rt2 < 500)
 
 ## converting a variable to a factor
 mutate(blp_df, lex = as.factor(lex))
@@ -324,7 +330,7 @@ mutate(blp_df,
          TRUE ~ "medium"
        ))
 
-## return only the mutated column
+## return only the mutated column (use transmute)
 transmute(blp_df,
           rt_speed = case_when(
             rt > 900 ~ "slow",
@@ -389,7 +395,6 @@ blp_df %>%
 ## long pipes aren't a problem, they are still readable
 ## and you can comment in between to explain what each step is doing
 
-library(tidyverse)
 
 ## Summary statistics with summarise -------------------------------------------
 
@@ -420,8 +425,6 @@ blp_df %>%
   drop_na() %>% 
   summarise(across(rt:rt.raw, list(median = median, mad = mad)))
 
-############################## END of second day ###############################
-
 ## Merging data frames ---------------------------------------------------------
 
 source("https://raw.githubusercontent.com/rafamoral/courses/main/data_wrangling/scripts/simple_df_eg.R")
@@ -446,6 +449,7 @@ semi_join(Df_a, Df_b)
 ## let's get real
 blp_stimuli <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/data_wrangling/data/blp_stimuli.csv")
 ## spell = word
+## old20 = measure of similarity to other words
 ## bnc = frequency of the word usage per million
 ## subtlex = frequency of word usage in a large database of movie subtitles
 
@@ -481,25 +485,6 @@ left_join(Df_13, Df_14)
 inner_join(Df_4, Df_5)
 inner_join(Df_4, rename(Df_5, x = a))
 inner_join(Df_4, Df_5, by = c("x" = "a"))
-
-## Reading in multiple files ---------------------------------------------------
-
-library(fs)
-
-getwd()
-setwd("/Users/rafamoral/Dropbox/ONLINE_COURSES/courses/data_wrangling/data/exp_data")
-dir_ls() %>% map(read_csv) %>% bind_rows()
-dir_ls() %>% map_dfr(read_csv, .id = "subject")
-
-all_subjects <- dir_ls() %>% map_dfr(read_csv, .id = "subject")
-all_subjects
-
-all_subjects %>% pull(subject) %>% unique
-
-all_subjects <- all_subjects %>%
-  mutate(subject = str_extract(subject, "[1-9]"))
-
-all_subjects %>% pull(subject) %>% unique
 
 ## Reshaping with pivots -------------------------------------------------------
 
@@ -593,5 +578,3 @@ tidy_df %>%
   mutate(slope = map_dbl(data, ~coef(lm(rt ~ delta, data = .))[2])) %>% 
   ungroup() %>%
   select(- data)
-
-############################## END of third day ################################
