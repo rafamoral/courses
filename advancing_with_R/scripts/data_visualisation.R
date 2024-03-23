@@ -1,11 +1,5 @@
-## if you can't install packages / admin privileges = posit.cloud
-
-## give a short intro to R Studio, the different windows etc
-## tidyverse, a package of packages (16)
-
 ## load the tidyverse suite of packages
 library(tidyverse)
-## explain what it's going; conflicts, etc.
 
 ## Introducing ggplot2 ---------------------------------------------------------
 ## "Grammar of Graphics" (Leland Wilkinson)
@@ -623,8 +617,6 @@ p1 + theme(axis.title = element_text(size = 20, family = "mono"))
 ## "Export" button, or
 ## ggsave(filename = "myplot.png", width = 6, height = 8, dpi = 300)
 
-## R Markdown tutorial ---------------------------------------------------------
-
 ## Combining ggplot objects as panels within a figure --------------------------
 
 library(ggpubr)
@@ -640,6 +632,7 @@ panel2 <- p2 +
 ggarrange(panel1, panel2)
 ggarrange(panel1, panel2, common.legend = TRUE)
 ggarrange(panel1, panel2, ncol = 1)
+ggarrange(panel1, panel2, ncol = 1, common.legend = TRUE)
 
 panel1 <- panel1 +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
@@ -647,4 +640,6 @@ panel1 <- panel1 +
 panel2 <- panel2 +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 
-ggarrange(panel1, panel2, ncol = 1)
+ggarrange(panel1, panel2, ncol = 1, common.legend = TRUE)
+
+## R Markdown tutorial ---------------------------------------------------------
