@@ -540,3 +540,93 @@ dpois(0:5, lambda = rate_male_50) %>%
 plot(0:5,
      dpois(0:5, lambda = rate_male_50),
      type = "h")
+
+log_rate_female_50 - log_rate_male_50
+estimates[2]
+
+rate_female_50 / rate_male_50
+exp(estimates[2])
+## females have a 29% increase, on average, of GP visits when compared to males,
+## while keeping age fixed
+
+exp(estimates[3])
+## for every extra year of life, on average, the number of GP visits
+## increases by 1.4%
+
+## 95% CI for the rate change comparing females to males
+exp(confint.default(fit14, parm = "sexfemale"))
+## with 95% confidence, females, on average, visit the GP
+## 16% to 44% more than males, for a fixed age
+
+## including differents slope for age for males vs. females
+fit15 <- glm(gp_visits ~ sex * age,
+             family = poisson,
+             data = doctor_df)
+coef(fit15)
+## these coefficients are, in order,
+## intercept for males
+## difference in intercepts between females and males
+## slope for males
+## difference in slopes between females and males
+
+## we can reparameterise to get the 2 intercepts and 2 slopes directly
+fit16 <- glm(gp_visits ~ 0 + sex + sex : age,
+             family = poisson,
+             data = doctor_df)
+coef(fit16)
+
+## checking that they are equivalent models, just reparmeterised versions
+logLik(fit15)
+logLik(fit16)
+
+cbind(coef(fit15), coef(fit16))
+
+fit15 # considers interaction (different slopes for males and females)
+fit14 # considers parallel lines (same slope for males and females)
+anova(fit14, fit15, test = "Chisq")
+
+## showing the model matrices
+model.matrix(fit14)[1:10,]
+model.matrix(fit15)[1:10,]
+model.matrix(fit16)[1:10,]
+## dummy variables are created automatically if you have factors in
+## the linear predictor of the model
+
+library(modelr)
+
+## predicted curves
+doctor_df %>%
+  add_predictions(model = fit15,
+                  type = "response") %>%
+  ggplot(aes(x = age, y = gp_visits)) +
+  geom_jitter(width = .75,
+              height = .2,
+              alpha = .1) +
+  facet_wrap(~ sex) +
+  geom_line(aes(y = pred),
+            col = 2,
+            lwd = 1)
+
+## including more predictors
+fit17 <- glm(gp_visits ~ sex * age + insurance,
+             family = poisson,
+             data = doctor_df)
+summary(fit17)
+
+deviance(fit16)
+deviance(fit17)
+
+anova(fit16, fit17, test = "Chisq")
+
+doctor_df <- doctor_df %>%
+  mutate(insurance = as.factor(insurance))
+
+doctor_df$insurance <- relevel(doctor_df$insurance, "medlevy")
+
+fit18 <- glm(gp_visits ~ sex * age + insurance,
+             family = poisson,
+             data = doctor_df)
+summary(fit18)
+
+logLik(fit17)
+logLik(fit18)
