@@ -147,6 +147,19 @@ plot(getSmo(fit9))
 text(getSmo(fit9), cex = .6)
 summary(fit9)
 
+y <- na.omit(NCD16)$N_CD16hi.panel4
+y_hat1 <- exp(predict(fit9)) - 1
+y_hat2 <- exp(predict(fit8)) - 1
+
+sqrt(sum((y - y_hat1)^2))
+sqrt(sum((y - y_hat2)^2))
+
+cor(y, y_hat1)
+cor(y, y_hat2)
+
+plot(y, y_hat1); abline(0, 1, lty = 2)
+plot(y, y_hat2); abline(0, 1, lty = 2)
+
 ## Gene expression data
 ## Studying multiple genes
 ## Topics: mixed models
@@ -247,7 +260,7 @@ fit13_ranef %>%
 fit13_ranef %>%
   arrange(eblup)
 
-## this model takes ~ 2 min minutes to fit
+## this model takes 2-5 min to fit
 fit14 <- lmer(expression ~ Stimulus.Name +
                 (0 + dummy(Stimulus.Name, "Null") | gene) +
                 (0 + dummy(Stimulus.Name, "BCG") | gene) +
@@ -257,6 +270,10 @@ fit14 <- lmer(expression ~ Stimulus.Name +
                 (0 + dummy(Stimulus.Name, "S.aureus") | gene) +
                 (0 + dummy(Stimulus.Name, "SEB") | gene),
               data = gene_expression_long)
+## alternatively...
+## https://www.dropbox.com/scl/fi/o9u361r52w58is2m8qzs6/fit14.RData?rlkey=tcbjtxdmszrbk69zkphyvkm5i&dl=1
+## load("fit14.RData")
+
 summary(fit14)
 
 AIC(fit13)
