@@ -124,22 +124,35 @@ fit6 <- gamlss(N_CD16hi.panel4 ~ .,
                data = na.omit(NCD16))
 wp(fit6)
 
-fit7 <- gamlss(N_CD16hi.panel4 + 1 ~ .,
-               family = GA,
+fit7 <- gamlss(N_CD16hi.panel4 ~ .,
+               family = NBI,
                data = na.omit(NCD16))
 wp(fit7)
 
-fit8 <- gamlss(N_CD16hi.panel4 + 1 ~ .,
+fit8 <- gamlss(N_CD16hi.panel4 ~ .,
               sigma.formula = ~ .,
-              family = GA,
+              family = NBI,
               data = na.omit(NCD16))
 wp(fit8)
 summary(fit8)
 plot(fit8)
 
-fit9 <- gamlss(N_CD16hi.panel4 + 1 ~ . + tr(~ Age + PhysicalActivity + BMI + MetabolicScore + LowAppetite + TroubleConcentrating + HoursOfSleep + Listless + DepressionScore + HeartRate + Temperature + HourOfSampling + DayOfSampling),
+fit9 <- gamlss(N_CD16hi.panel4 ~ Sex + OwnsHouse + PhysicalActivity + 
+                 LivesWithPartner + LivesWithKids + BornInCity +
+                 CMVPositiveSerology + Smoking + UsesCannabis +
+                 RecentPersonalCrisis + Education +
+                 DustExposure + Income + HadMeasles +
+                 HadChickenPox + HadMumps + HadTonsillectomy +
+                 HadAppendicectomy + VaccineHepA +
+                 VaccineMMR + VaccineTyphoid + VaccineWhoopingCough +
+                 VaccineYellowFever + VaccineHepB + VaccineFlu +
+                 tr(~ Age + PhysicalActivity + BMI +
+                      MetabolicScore + LowAppetite +
+                      TroubleConcentrating + HoursOfSleep +
+                      Listless + DepressionScore + HeartRate +
+                      Temperature + HourOfSampling + DayOfSampling),
                sigma.formula = ~ .,
-               family = GA,
+               family = NBI,
                data = na.omit(NCD16))
 wp(fit9)
 plot(fit9)
@@ -148,17 +161,17 @@ text(getSmo(fit9), cex = .6)
 summary(fit9)
 
 y <- na.omit(NCD16)$N_CD16hi.panel4
-y_hat1 <- exp(predict(fit9)) - 1
-y_hat2 <- exp(predict(fit8)) - 1
+y_hat_tree <- exp(predict(fit9))
+y_hat_linear <- exp(predict(fit8))
 
-sqrt(sum((y - y_hat1)^2))
-sqrt(sum((y - y_hat2)^2))
+sqrt(sum((y - y_hat_tree)^2))
+sqrt(sum((y - y_hat_linear)^2))
 
-cor(y, y_hat1)
-cor(y, y_hat2)
+cor(y, y_hat_tree)
+cor(y, y_hat_linear)
 
-plot(y, y_hat1); abline(0, 1, lty = 2)
-plot(y, y_hat2); abline(0, 1, lty = 2)
+plot(y, y_hat_tree, asp = 1); abline(0, 1, lty = 2)
+plot(y, y_hat_linear, asp = 1); abline(0, 1, lty = 2)
 
 ## Gene expression data
 ## Studying multiple genes
