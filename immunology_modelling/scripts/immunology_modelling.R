@@ -56,6 +56,7 @@ fit2 <- gamlss(expression ~ .,
                sigma.formula = ~ .,
                family = NO,
                data = IFNG_expression)
+
 wp(fit2)
 summary(fit2)
 drop1(fit2, what = "mu")
@@ -66,9 +67,9 @@ fit2b <- stepGAICAll.A(fit2)
 AIC(fit1)
 AIC(fit2)
 AIC(fit2b)
-
+summary(fit2b)
 ## adding a regression tree to the linear predictor for the mean
-fit3 <- gamlss(expression ~ tr(~ Age + OwnsHouse + Sex + BornInCity +
+fit3 <- gamlss(expression ~ nn(~ Age + OwnsHouse + Sex + BornInCity +
                                  CMVPositiveSerology + RecentPersonalCrisis +
                                  Smoking + HadChickenPox + VaccineMMR +
                                  VaccineFlu + DepressionScore + HeartRate +
@@ -81,7 +82,7 @@ fit3 <- gamlss(expression ~ tr(~ Age + OwnsHouse + Sex + BornInCity +
 wp(fit3)
 plot(fit3)
 plot(getSmo(fit3))
-text(getSmo(fit3), cex = .6)
+text(getSmo(fit3), cex = .9)
 
 ## modelling continuous predictors using thin plate splines
 fit4 <- gam(expression ~ s(Age) + OwnsHouse + Sex + LivesWithKids +
@@ -157,7 +158,7 @@ fit9 <- gamlss(N_CD16hi.panel4 ~ Sex + OwnsHouse + PhysicalActivity +
 wp(fit9)
 plot(fit9)
 plot(getSmo(fit9))
-text(getSmo(fit9), cex = .6)
+text(getSmo(fit9), cex = .9)
 summary(fit9)
 
 y <- na.omit(NCD16)$N_CD16hi.panel4
@@ -285,7 +286,7 @@ fit14 <- lmer(expression ~ Stimulus.Name +
               data = gene_expression_long)
 ## alternatively...
 ## https://www.dropbox.com/scl/fi/o9u361r52w58is2m8qzs6/fit14.RData?rlkey=tcbjtxdmszrbk69zkphyvkm5i&dl=1
-## load("fit14.RData")
+## load("../../../fit14.RData")
 
 summary(fit14)
 
