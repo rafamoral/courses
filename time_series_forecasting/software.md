@@ -9,7 +9,20 @@ There are a few pieces of software to install:
     environment for using R.
 -   [tidyverse](https://www.tidyverse.org/): A bundle of R packages to
     use R the modern way.
+-   [JAGS](https://mcmc-jags.sourceforge.io): A software that allows for the estimation of Bayesian models via MCMC (Markov Chain Monte Carlo).
+-   [Stan](http://mc-stan.org/): A Bayesian probabilistic modelling
+    language.
+-   [brms](https://github.com/paul-buerkner/brms): An R package to
+    interface with [Stan](http://mc-stan.org/).
 -   Various R packages including `fable`, `fpp3`, etc
+
+All of the above installation should be easy and painless except
+possibly for the installation of [Stan](http://mc-stan.org/), which can
+possibly be tricky because it is an external program and requires
+addition programming tools like c++ libraries and compilers etc.
+However, in the instructions below there are links to pages that provide
+ample detail on how to install and test [Stan](http://mc-stan.org/) and
+all its dependencies.
 
 ## Installing R
 
@@ -70,5 +83,118 @@ The main packages that are contained within the
 
 We need a number of extra R packages, which can be installed individually via the R package installer dialog, or else with the following commands:
 ```r
-install.packages(c("fpp3", "seasonal", "aimsir17", "forecast"))
+install.packages(c("fpp3", "seasonal", "aimsir17", "forecast", "tscount",
+                   "mgcv", "gratia", "splines", "modelr", "marginaleffects"))
+```
+
+## Installing JAGS
+
+Go to the [JAGS](https://mcmc-jags.sourceforge.io) website and follow the links
+for downloading. It is available for Mac, Windows and Linux.
+
+After installing JAGS, we need to install the `R2jags` package as an interface to JAGS within R. To do so use the following command:
+```r
+install.packages("R2jags")
+```
+
+## Installing Stan
+
+Stan is a probabilistic programming language. Using the Stan language,
+you can define arbitrary probabilistic models and then perform Bayesian
+inference on them using
+[MCMC](https://en.wikipedia.org/wiki/Markov_chain_Monte_Carlo),
+specifically using [Hamiltonian Monte
+Carlo](https://en.wikipedia.org/wiki/Hamiltonian_Monte_Carlo).
+
+In general, Stan is a external program to R; it does not need to be used
+with R. However, one of the most common ways of using Stan is by using
+it through R and that is what we will be doing in this workshop.
+
+To use Stan with R, you need to install an R package called
+[rstan](http://mc-stan.org/users/interfaces/rstan). However, you also
+need additional external tools installed in order for
+[rstan](http://mc-stan.org/users/interfaces/rstan) to work.
+
+Instructions for installing rstan on can be found here:
+
+- <https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started>
+
+Specific instructions for different platforms can be found by following links from this page.
+
+## Installing brms
+
+If the installation of R, Rstudio and Stan seemed to go fine, you can
+get the [brms](https://github.com/paul-buerkner/brms) R package, which
+makes using Stan with R particularly easy when using conventional
+models.
+
+
+To get [brms](https://github.com/paul-buerkner/brms), first start
+Rstudio (whether on Windows, Macs, Linux) and then run
+
+``` {.R}
+install.packages("brms")
+```
+
+You can test that it worked by running the following code, which should take around 1 minute to complete.
+
+```r
+library(tidyverse)
+library(brms)
+
+data_df <- tibble(x = rnorm(10))
+
+M <- brm(x ~ 1, data = data_df)
+```
+
+### Installing Stan, `rstan`, `brms`
+
+(from https://github.com/mark-andrews)
+
+As a test, recently, I installed Stan, `rstan`, and `brms` from scrarch on Windows.
+
+First, I did this: 
+
+* Uninstall R and RStudio completely.
+* Delete my Documents/R (default location of R packages) folder
+* Reinstall R and RStudio from latest versions
+
+Then, I installed `rstan`.
+``` {.R}
+install.packages("rstan", repos = "https://cloud.r-project.org/", dependencies = TRUE)
+```
+
+Then, I installed `rtools` using 64 bit installer here https://cran.r-project.org/bin/windows/Rtools/, i.e. https://cran.r-project.org/bin/windows/Rtools/rtools40-x86_64.exe
+
+Then, I tested Stan/`rstan` with
+```{.R}
+library(rstan)
+example(stan_model,run.dontrun = TRUE)
+```
+There was a lot of output, but it eventually (after about 3-5 minutes) finished with samples from a model.
+
+Then, I installed `tidyverse` and `brms`.
+
+```{.R}
+install.packages("tidyverse")
+install.packages("brms")
+```
+
+Then, tested the tiny `brms` model.
+```{.R}
+library(tidyverse)
+library(brms)
+
+data_df <- tibble(x = rnorm(10))
+
+M <- brm(x ~ 1, data = data_df)
+```
+
+And all was well.
+
+## Installing `mvgam`
+
+After installing Stan, you may install the `mvgam` package using
+```r
+install.packages("mvgam")
 ```
