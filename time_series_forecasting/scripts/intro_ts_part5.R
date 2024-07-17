@@ -74,6 +74,41 @@ stan_run <- stan(data = list(N = nrow(sealevel_df),
 print(stan_run)
 plot(stan_run)
 
+## to compare models fitted using Stan
+stan_code <- "
+data {
+  int<lower=0> N;
+  vector[N] y;
+  vector[N] x;
+}
+parameters {
+  real alpha;
+  real beta;
+  real<lower=0> sigma;
+}
+model {
+  y ~ normal(alpha + beta * x, sigma);
+  alpha ~ normal(0, 100);
+  beta ~ normal(0, 100);
+  sigma ~ uniform(0, 100);
+}
+generated quantities {
+  vector[N] log_lik;
+  for(t in 1:N) {
+    log_lik[t] = normal_lpdf(y[t] | alpha + beta * x[t], sigma);
+  }
+}
+"
+
+stan_run <- stan(data = list(N = nrow(sealevel_df), 
+                             y = sealevel_df$sea_level_m,
+                             x = sealevel_df$year_AD/1000),
+                 model_code = stan_code)
+
+library(loo)
+my_log_lik <- extract_log_lik(stan_run)
+waic(my_log_lik)
+
 ## An AR(1) model in JAGS
 
 ## reading the sheep data (in millions)
