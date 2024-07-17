@@ -2,7 +2,6 @@ library(tidyverse)
 library(R2jags)
 library(rstan)
 
-
 # Bayesian modelling with JAGS and Stan -----------------------------------
 
 ## Bayesian modelling with JAGS
@@ -409,3 +408,5 @@ r_3 <- print(ff_run_3)
 with(r_1, print(c(DIC, pD)))
 with(r_2, print(c(DIC, pD)))
 with(r_3, print(c(DIC, pD))) ## much better fit but a lot more parameters!
+
+## useful link: https://mc-stan.org/docs/stan-users-guide/time-series.html
