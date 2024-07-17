@@ -63,21 +63,3 @@ plot_kernels <- function(gp_ests, max_time = 50){
           col = "#B97C7C", border = NA)
   lines(pred_vals, cred[3,], col = "#7C0000", lwd = 2.5)
 }
-
-## Code adapted from Andrew Parnell
-
-tpower <- function(x, t, p) {
-  # Truncated p-th power function
-  (x - t) ^ p * (x > t)
-}
-
-bbase <- function(x, xl = min(x), xr = max(x), nseg = 10, deg = 3) {
-  # Construct B-spline basis
-  dx <- (xr - xl) / nseg
-  knots <- seq(xl - deg * dx, xr + deg * dx, by = dx)
-  P <- outer(x, knots, tpower, deg)
-  n <- dim(P)[2]
-  D <- diff(diag(n), diff = deg + 1) / (gamma(deg + 1) * dx ^ deg)
-  B <- (-1) ^ (deg + 1) * P %*% t(D)
-  return(B)
-}
