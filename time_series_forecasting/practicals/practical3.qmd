@@ -1,0 +1,347 @@
+---
+title: "Time Series and Forecasting -- Practical 3"
+author: ""
+date: ""
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(fpp3)
+```
+
+## Exercise 1
+
+Forecast the Chinese GDP from the `global_economy` data set using an ETS model. Experiment with the various options in the `ETS()` function to see how much the forecasts change with damped trend, or with a logarithmic transformation. Try to develop an intuition of what each is doing to the forecasts.
+
+[Hint: use `h=20` when forecasting, so you can clearly see the differences between the various options when plotting the forecasts.]
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+china <- global_economy %>%
+  filter(Country == "China")
+china %>% autoplot(GDP)
+
+# It clearly needs a relatively strong transformation due to the increasing variance.
+
+fit <- china %>%
+  model(
+    ets = ETS(GDP),
+    ets_damped = ETS(GDP ~ trend("Ad")),
+    ets_log = ETS(log(GDP))
+  )
+
+fit
+fit %>%
+  forecast(h = "20 years") %>%
+  autoplot(china, level = NULL)
+
+# The transformations have a big effect. The damping has relatively a small effect.
+```
+
+## Exercise 2
+
+**(a)** Find an ETS model for the Gas data from `aus_production` and forecast the next few years.
+
+**(b)** Experiment with making the trend damped. Does it improve the forecasts?
+
+**(c)** Check model diagnostics by looking at `gg_tsresiduals()` and carry out a portmanteau test for residual autocorrelation.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+aus_production %>% autoplot(Gas)
+
+# There is a huge increase in variance as the series increases in level. That makes it necessary to use multiplicative seasonality.
+
+fit <- aus_production %>%
+  model(
+    hw = ETS(Gas ~ error("M") + trend("A") + season("M")),
+    hwdamped = ETS(Gas ~ error("M") + trend("Ad") + season("M")),
+  )
+
+fit %>% glance()
+
+# The non-damped model seems to be doing slightly better here, probably because the trend is very strong over most of the historical data.
+
+fit %>%
+  select(hw) %>%
+  gg_tsresiduals()
+
+fit %>% tidy()
+
+fit %>%
+  augment() %>%
+  filter(.model == "hw") %>%
+  features(.innov, ljung_box, dof = 8, lag = 24)
+
+# There is still some small correlations left in the residuals, showing the model has not fully captured the available information. There also appears to be some heteroskedasticity in the residuals with larger variance in the first half the series.
+
+fit %>%
+  forecast(h = 36) %>%
+  filter(.model == "hw") %>%
+  autoplot(aus_production)
+
+# While the point forecasts look ok, the intervals are excessively wide.
+```
+
+## Exercise 3
+
+Compute the total domestic overnight trips across Australia from the `tourism` dataset.
+
+**(a)** Plot the data and describe the main features of the series.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+aus_trips <- tourism %>%
+  summarise(Trips = sum(Trips))
+aus_trips %>%
+  autoplot(Trips)
+
+# The data is seasonal. A slightly decreasing trend exists until 2010, after which it is replaced with a stronger upward trend.
+```
+
+**(b)** Decompose the series using STL and obtain the seasonally adjusted data.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+dcmp <- aus_trips %>%
+  model(STL(Trips)) %>%
+  components()
+dcmp %>%
+  as_tsibble() %>%
+  autoplot(season_adjust)
+```
+
+**(c)** Forecast the next two years of the series using an additive damped trend method applied to the seasonally adjusted data. (This can be specified using `decomposition_model()`.)
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+stletsdamped <- decomposition_model(
+  STL(Trips),
+  ETS(season_adjust ~ error("A") + trend("Ad") + season("N"))
+)
+aus_trips %>%
+  model(dcmp_AAdN = stletsdamped) %>%
+  forecast(h = "2 years") %>%
+  autoplot(aus_trips)
+```
+
+**(d)** Forecast the next two years of the series using an appropriate model for Holt’s linear method applied to the seasonally adjusted data (as before but without damped trend).
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+stletstrend <- decomposition_model(
+  STL(Trips),
+  ETS(season_adjust ~ error("A") + trend("A") + season("N"))
+)
+aus_trips %>%
+  model(dcmp_AAN = stletstrend) %>%
+  forecast(h = "2 years") %>%
+  autoplot(aus_trips)
+```
+
+**(e)** Now use `ETS()` to choose a seasonal model for the data.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+aus_trips %>%
+  model(ets = ETS(Trips)) %>%
+  forecast(h = "2 years") %>%
+  autoplot(aus_trips)
+```
+
+**(f)** Compare the RMSE of the ETS model with the RMSE of the models you obtained using STL decompositions. Which gives the better in-sample fits?
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+fit <- aus_trips %>%
+  model(
+    dcmp_AAdN = stletsdamped,
+    dcmp_AAN = stletstrend,
+    ets = ETS(Trips)
+  )
+accuracy(fit)
+
+# The STL decomposition forecasts using the additive trend model, ETS(A,A,N), is slightly better in-sample. However, note that this is a biased comparison as the models have different numbers of parameters.
+```
+
+**(g)** Compare the forecasts from the three approaches? Which seems most reasonable?
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+fit %>%
+  forecast(h = "2 years") %>%
+  autoplot(aus_trips, level = NULL)
+
+# The forecasts are almost identical. So I'll use the decomposition model with additive trend as it has the smallest RMSE.
+```
+
+**(h)** Check the residuals of your preferred model.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+best <- fit %>%
+  select(dcmp_AAN)
+augment(best) %>% gg_tsdisplay(.resid, lag_max = 24, plot_type = "histogram")
+augment(best) %>%
+  features(.innov, ljung_box, lag = 24, dof = 4)
+
+# The residuals look okay however there still remains some significant auto-correlation. The null of the LB test is rejected. This is mainly due to the large spike at lag 14 which from a modelling perspective we would probably ignore. Try testing for joint auto-correlation up to length 12 and see whether the test results change.
+```
+
+## Exercise 4
+
+Use `ETS()` to select an appropriate model for the following series: the closing prices for the four stocks in `gafa_stock`, and the lynx series in `pelt`. Does it always give good forecasts? Find an example where it does not work well. Can you figure out why?
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+gafa_regular <- gafa_stock %>%
+  group_by(Symbol) %>%
+  mutate(trading_day = row_number()) %>%
+  ungroup() %>%
+  as_tsibble(index = trading_day, regular = TRUE)
+
+gafa_stock %>% autoplot(Close)
+
+gafa_regular %>%
+  model(ETS(Close))
+
+gafa_regular %>%
+  model(ETS(Close)) %>%
+  forecast(h = 50) %>%
+  autoplot(gafa_regular %>% group_by_key() %>% slice((n() - 100):n()))
+
+# Forecasts look reasonable for an efficient market.
+
+pelt %>%
+  model(ETS(Lynx))
+pelt %>%
+  model(ETS(Lynx)) %>%
+  forecast(h = 10) %>%
+  autoplot(pelt)
+
+# Here the cyclic behaviour of the lynx data is completely lost. ETS models are not designed to handle cyclic data, so there is nothing that can be done to improve this.
+```
+
+## Exercise 5
+
+The dataset `global_economy` contains the annual Exports from many countries. Select one country to analyse. (The solution will use Argentina).
+
+**(a)** Plot the Exports series and discuss the main features of the data.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+global_economy %>%
+  filter(Country == "Argentina") %>%
+  autoplot(Exports)
+
+# There is a huge jump in Exports in 2002, due to the deregulation of the Argentinian peso. Since then, Exports (as a percentage of GDP) has gradually returned to 1990 levels.
+```
+
+**(b)** Use an `ETS(A,N,N)` model to forecast the series, and plot the forecasts.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+etsANN <- global_economy %>%
+  filter(Country == "Argentina") %>%
+  model(ETS(Exports ~ error("A") + trend("N") + season("N")))
+etsANN %>%
+  forecast(h = 10) %>%
+  autoplot(global_economy)
+```
+
+**(c)** Compute the RMSE values for the training data.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+accuracy(etsANN) %>% select(RMSE)
+```
+
+**(d)** Compare the results to those from an `ETS(A,A,N)` model. (Remember that the trended model is using one more parameter than the simpler model.) Discuss the merits of the two forecasting methods for this data set.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+fit <- global_economy %>%
+  filter(Country == "Argentina") %>%
+  model(
+    ses = ETS(Exports ~ error("A") + trend("N") + season("N")),
+    holt = ETS(Exports ~ error("A") + trend("A") + season("N"))
+  )
+accuracy(fit)
+
+# There is very little difference in training RMSE between these models. So the extra parameter is not doing much.
+```
+
+**(e)** Compare the forecasts from both methods. Which do you think is best?
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+fit %>%
+  forecast(h = 10) %>%
+  autoplot(global_economy)
+
+# The forecasts are similar. In this case, the simpler model is preferred.
+```
+
+**(f)** Calculate a 95% prediction interval for the first forecast for each series, using the RMSE values and assuming normal errors. Compare your intervals with those produced using R.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+s <- accuracy(fit) %>% pull(RMSE)
+yhat <- forecast(fit, h = 1) %>% pull(.mean)
+# SES
+yhat[1] + c(-1, 1) * qnorm(0.975) * s[1]
+# Holt
+yhat[2] + c(-1, 1) * qnorm(0.975) * s[2]
+fit %>%
+  forecast(h = 1) %>%
+  mutate(PI = hilo(Exports, level = 95))
+
+# Using RMSE has failed to take account of the degrees of freedom for each model. Compare the following
+
+sse <- augment(fit) %>%
+  as_tibble() %>%
+  group_by(.model) %>%
+  summarise(s = sum(.resid^2)) %>%
+  pull(s)
+s <- sqrt(sse / (58 - c(2, 4)))
+# SES
+yhat[1] + c(-1, 1) * qnorm(0.975) * s[1]
+# Holt
+yhat[2] + c(-1, 1) * qnorm(0.975) * s[2]
+```

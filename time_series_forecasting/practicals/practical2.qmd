@@ -1,0 +1,490 @@
+---
+title: "Time Series and Forecasting -- Practical 2"
+author: ""
+date: ""
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exercise 1
+
+Are the following statements true or false? Why?
+
+**(a)** Good forecast methods should have normally distributed residuals.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+# False. Although many good forecasting methods produce normally distributed residuals this is not required to produce good forecasts. Other forecasting methods may use other distributions, it is just less common as they can be more difficult to work with.
+```
+
+**(b)** A model with small residuals will give good forecasts.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+# False. It is possible to produce a model with small residuals by making a highly complicated (overfitted) model that fits the data extremely well. This highly complicated model will often perform very poorly when forecasting new data.
+```
+
+**(c)** The best measure of forecast accuracy is MAPE.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+# False. There is no single best measure of accuracy - often you would want to see a collection of accuracy measures as they can reveal different things about your residuals. MAPE in particular has some substantial disadvantages - extreme values can result when $y_t$ is close to zero, and it assumes that the unit being measured has a meaningful zero.
+```
+
+**(d)** If your model doesn't forecast well, you should make it more complicated.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+# False. There are many reasons why a model may not forecast well, and making the model more complicated can make the forecasts worse. The model specified should capture structures that are evident in the data. Although adding terms that are unrelated to the structures found in the data will improve the model's residuals, the forecasting performance of the model will not improve. Adding missing features relevant to the data (such as including a seasonal pattern that exists in the data) should improve forecast performance.
+```
+
+**(e)** Always choose the model with the best forecast accuracy as measured on the test set.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+# False. There are many measures of forecast accuracy, and the appropriate model is the one which is best suited to the forecasting task. For instance, you may be interested in choosing a model which forecasts well for predictions exactly one year ahead. In this case, using cross-validated accuracy could be a more useful approach to evaluating accuracy.
+```
+
+## Exercise 2
+
+Monthly Australian retail data is provided in `aus_retail` after loading the `fpp3` package. Select one of the time series as follows (but choose your own seed value):
+
+```{r, eval = FALSE}
+set.seed(1234)
+myseries <- aus_retail %>%
+  filter(`Series ID` == sample(aus_retail$`Series ID`,1))
+```
+
+**(a)** Create a training dataset consisting of observations before 2011 using.
+
+```{r, eval = FALSE}
+myseries_train <- myseries %>%
+  filter(year(Month) < 2011)
+```
+
+**(b)** Check that your data have been split appropriately by producing the following plot.
+
+```{r, eval = FALSE}
+autoplot(myseries, Turnover) +
+  autolayer(myseries_train, Turnover, colour = "red")
+```
+
+**(c)** Fit a seasonal naïve model using `SNAIVE()` applied to your training data.
+
+```{r, eval = FALSE}
+fit <- myseries_train %>%
+  model(SNAIVE())
+```
+
+**(d)** Check the residuals. Do the residuals appear to be uncorrelated and normally distributed?
+
+```{r, eval = FALSE}
+fit %>% gg_tsresiduals()
+```
+
+**(e)** Produce forecasts for the test data.
+
+```{r, eval = FALSE}
+fc <- fit %>%
+  forecast(new_data = anti_join(myseries, myseries_train))
+fc %>% autoplot(myseries)
+```
+
+**(f)** Compare the accuracy of your forecasts against the actual values.
+
+```{r, eval = FALSE}
+fit %>% accuracy()
+fc %>% accuracy(myseries)
+```
+
+**(g)** How sensitive are the accuracy measures to the amount of training data used?
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+# The accuracy on the training data is almost unchanged when the size of the training set is increased. However, the accuracy on the test data decreases as we are averaging RMSE over the forecast horizon, and with less training data the forecasts horizons can be longer.
+```
+
+## Exercise 3
+
+This exercise uses the `canadian_gas` data (monthly Canadian gas production in billions of cubic metres, January 1960 – February 2005).
+
+**(a)** Plot the data using `autoplot()`, `gg_subseries()` and `gg_season()` to look at the effect of the changing seasonality over time.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+canadian_gas %>% autoplot(Volume)
+canadian_gas %>% gg_subseries(Volume)
+canadian_gas %>% gg_season(Volume)
+
+# The changes in seasonality are possibly due to changes in the regulation of gas prices --- thanks to Lewis Kirvan for pointing this out.
+```
+
+**(b)** Do an STL decomposition of the data. You will need to choose a seasonal window to allow for the changing shape of the seasonal component.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+fit <- canadian_gas %>%
+  model(STL(Volume)) %>%
+  components()
+fit %>% autoplot()
+```
+
+**(c)** How does the seasonal shape change over time? [Hint: Try plotting the seasonal component using `gg_season()`.]
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+fit %>% gg_season(season_year)
+
+# Here the changes are easier to see. Up to about 1990 there is strong seasonality with the greatest volume in the Canadian winter. The seasonality increases in size over time. After 1990 the seasonality changes shape and appears to be driven partly by the month length near the end of the series.
+```
+
+**(d)** Can you produce a plausible seasonally adjusted series?
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+canadian_gas %>%
+  autoplot(Volume) +
+  autolayer(fit, season_adjust, col = "blue")
+```
+
+**(e)** Compare the results with those obtained using SEATS and X-11. How are they different?
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+canadian_gas %>%
+  model(X_13ARIMA_SEATS(Volume ~ seats())) %>%
+  components() %>%
+  autoplot()
+canadian_gas %>%
+  model(X_13ARIMA_SEATS(Volume ~ x11())) %>%
+  components() %>%
+  autoplot()
+
+# Note that X11 and SEATS fit multiplicative decompositions by default, so it is hard to directly compare the results with STL.
+
+# Both SEATS and X11 have estimated a more wiggly trend line than STL. In particular, the additional flexibility of the SEATS trend has meant the irregular component has less remaining autocorrelation.
+```
+
+## Exercise 4
+
+This exercise uses the datasets on Australian time series from the `tsibbledata` package. Produce forecasts for the following series using whichever of `NAIVE(y)`, `SNAIVE(y)` or `RW(y ~ drift())` is more appropriate in each case:
+
+**(a)** Bricks (`aus_production`)
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+aus_production %>%
+  filter(!is.na(Bricks)) %>%
+  autoplot(Bricks) +
+  labs(title = "Clay brick production")
+
+# This data appears to have more seasonality than trend, so of the models available, seasonal naive is most appropriate.
+
+aus_production %>%
+  filter(!is.na(Bricks)) %>%
+  model(SNAIVE(Bricks)) %>%
+  forecast(h = "5 years") %>%
+  autoplot(aus_production)
+```
+
+**(b)** NSW Lambs (`aus_livestock`)
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+nsw_lambs <- aus_livestock %>%
+  filter(State == "New South Wales", Animal == "Lambs")
+nsw_lambs %>%
+  autoplot(Count)
+
+# This data appears to have more seasonality than trend, so of the models available, seasonal naive is most appropriate.
+
+nsw_lambs %>%
+  model(SNAIVE(Count)) %>%
+  forecast(h = "5 years") %>%
+  autoplot(nsw_lambs)
+```
+
+**(c)** Household wealth (`hh_budget`)
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+hh_budget %>%
+  autoplot(Wealth)
+
+# Annual data with trend upwards, so we can use a random walk with drift.
+
+hh_budget %>%
+  model(RW(Wealth ~ drift())) %>%
+  forecast(h = "5 years") %>%
+  autoplot(hh_budget)
+```
+
+**(d)** Australian takeaway food turnover (`aus_retail`)
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+takeaway <- aus_retail %>%
+  filter(Industry == "Takeaway food services") %>%
+  summarise(Turnover = sum(Turnover))
+takeaway %>% autoplot(Turnover)
+
+# This data has strong seasonality and strong trend, so we will use a seasonal naive model with drift.
+
+takeaway %>%
+  model(SNAIVE(Turnover ~ drift())) %>%
+  forecast(h = "5 years") %>%
+  autoplot(takeaway)
+
+# This is actually not one of the four benchmark methods we discussed previously, but is sometimes a useful benchmark when there is strong seasonality and strong trend.
+```
+
+## Exercise 5
+
+Use the Facebook stock price (data set `gafa_stock` from the `tsibbledata` package) to do the following:
+
+**(a)** Produce a time plot of the series.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+fb_stock <- gafa_stock %>%
+  filter(Symbol == "FB")
+fb_stock %>%
+  autoplot(Close)
+
+# An upward trend is evident until mid-2018, after which the closing stock price drops.
+```
+
+**(b)** Produce forecasts using the drift method and plot them. Hint: The data must be made regular before it can be modelled. You can use trading days as the regular index using this code:
+
+```{r, eval = FALSE}
+fb_stock <- fb_stock %>%
+  mutate(trading_day = row_number()) %>%
+  update_tsibble(index = trading_day, regular = TRUE)
+```
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+# The data must be made regular before it can be modelled. We will use trading days as our regular index.
+
+fb_stock <- fb_stock %>%
+  mutate(trading_day = row_number()) %>%
+  update_tsibble(index = trading_day, regular = TRUE)
+
+# Time to model a random walk with drift.
+
+fb_stock %>%
+  model(RW(Close ~ drift())) %>%
+  forecast(h = 100) %>%
+  autoplot(fb_stock)
+```
+
+**(c)** Show, graphically, that the forecasts are identical to extending the line drawn between the first and last observations.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+fb_stock %>%
+  model(RW(Close ~ drift())) %>%
+  forecast(h = 100) %>%
+  autoplot(fb_stock) +
+  geom_line(
+    aes(y = Close),
+    linetype = "dashed", colour = "blue",
+    data = fb_stock %>% filter(trading_day %in% range(trading_day))
+  )
+```
+
+## Exercise 6
+
+We will use the Bricks data from `aus_production` (Australian quarterly clay brick production 1956–2005) for this exercise.
+
+**(a)** Use an STL decomposition to calculate the trend-cycle and seasonal indices. (Experiment with having fixed or changing seasonality.)
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+tidy_bricks <- aus_production %>%
+  filter(!is.na(Bricks))
+tidy_bricks %>%
+  model(STL(Bricks)) %>%
+  components() %>%
+  autoplot()
+
+# Data is multiplicative, and so a transformation should be used.
+
+dcmp <- tidy_bricks %>%
+  model(STL(log(Bricks))) %>%
+  components()
+dcmp %>%
+  autoplot()
+
+# Seasonality varies slightly.
+
+dcmp <- tidy_bricks %>%
+  model(stl = STL(log(Bricks) ~ season(window = "periodic"))) %>%
+  components()
+dcmp %>% autoplot()
+
+# The seasonality looks fairly stable, so I've used a periodic season (window). The decomposition still performs well when the seasonal component is fixed. The remainder term does not appear to contain a substantial amount of seasonality.
+```
+
+**(b)** Compute and plot the seasonally adjusted data.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+dcmp %>%
+  as_tsibble() %>%
+  autoplot(season_adjust)
+```
+
+**(c)** Use a naïve method to produce forecasts of the seasonally adjusted data.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+fit <- dcmp %>%
+  select(-.model) %>%
+  model(naive = NAIVE(season_adjust)) %>%
+  forecast(h = "5 years")
+dcmp %>%
+  as_tsibble() %>%
+  autoplot(season_adjust) + autolayer(fit)
+```
+
+**(d)** Use `decomposition_model()` to reseasonalise the results, giving forecasts for the original data.
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+fit <- tidy_bricks %>%
+  model(stl_mdl = decomposition_model(STL(log(Bricks)), NAIVE(season_adjust)))
+fit %>%
+  forecast(h = "5 years") %>%
+  autoplot(tidy_bricks)
+```
+
+**(e)** Do the residuals look uncorrelated?
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+fit %>% gg_tsresiduals()
+
+# The residuals do not appear uncorrelated as there are several lags of the ACF which exceed the significance threshold.
+```
+
+**(f)** Compare forecasts from `decomposition_model()` with those from `SNAIVE()`, using a test set comprising the last 2 years of data. Which is better?
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+tidy_bricks_train <- tidy_bricks %>%
+  slice(1:(n() - 8))
+fit <- tidy_bricks_train %>%
+  model(
+    stl_mdl = decomposition_model(STL(log(Bricks)), NAIVE(season_adjust)),
+    snaive = SNAIVE(Bricks)
+  )
+
+fc <- fit %>%
+  forecast(h = "2 years")
+fc %>%
+  autoplot(tidy_bricks, level = NULL)
+
+# The decomposition forecasts appear to more closely follow the actual future data.
+
+fc %>%
+  accuracy(tidy_bricks)
+
+# The STL decomposition forecasts are more accurate than the seasonal naive forecasts across all accuracy measures.
+```
+
+## Exercise 7
+
+Apply a seasonal naïve method to the quarterly Australian beer production data from 1992. Check if the residuals look like white noise, and plot the forecasts. The following code will help.
+
+```{r, eval = FALSE}
+# Extract data of interest
+recent_production <- aus_production %>%
+  filter(year(Quarter) >= 1992)
+
+# Define and estimate a model
+fit <- recent_production %>% model(SNAIVE(Beer))
+
+# Look at the residuals
+fit %>% gg_tsresiduals()
+
+# Look a some forecasts
+fit %>% forecast() %>% autoplot(recent_production)
+```
+
+What do you conclude?
+
+```{r, eval = FALSE}
+#| code-fold: true
+#| code-summary: "Show Answer"
+
+# Extract data of interest
+recent_production <- aus_production %>%
+  filter(year(Quarter) >= 1992)
+
+# Define and estimate a model
+fit <- recent_production %>% model(SNAIVE(Beer))
+
+# Look at the residuals
+fit %>% gg_tsresiduals()
+
+# Look a some forecasts
+fit %>% forecast() %>% autoplot(recent_production)
+
+# The residuals are not centred around 0 (typically being slightly below it), this is due to the model failing to capture the negative trend in the data.
+# Peaks and troughs in residuals spaced roughly 4 observations apart are apparent leading to a negative spike at lag 4 in the ACF. So they do not resemble white noise. Lags 1 and 3 are also significant, however they are very close to the threshold and are of little concern. 
+# The distribution of the residuals does not appear very normal, however it is probably close enough for the accuracy of our intervals (it being not centred on 0 is more concerning).
+
+# The forecasts look reasonable, although the intervals may be a bit wide. This is likely due to the slight trend not captured by the model (which subsequently violates the assumptions imposed on the residuals).
+```
