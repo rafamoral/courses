@@ -3,6 +3,7 @@ title: "Time Series and Forecasting -- Practical 3"
 author: ""
 date: ""
 output: html_document
+self-contained: true
 ---
 
 ```{r setup, include=FALSE}
