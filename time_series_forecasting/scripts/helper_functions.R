@@ -24,14 +24,14 @@ plot_fcs <- function(model, n_ahead = 0){
 
 # Compute the covariance kernel for a given draw
 # of GP alpha and rho parameters
-quad_kernel = function(rho, alpha, times){
+quad_kernel <- function(rho, alpha, times){
   covs <- alpha ^ 2 * 
     exp(-0.5 * ((times / rho) ^ 2))
   return(covs)
 }
 
 # Compute kernels for each posterior draw
-plot_kernels = function(gp_ests, max_time = 50){
+plot_kernels <- function(gp_ests, max_time = 50){
   # set up an empty matrix to store the kernel estimates 
   # for each posterior draw
   draw_seq <- seq(0, max_time, length.out = 100)
@@ -62,4 +62,22 @@ plot_kernels = function(gp_ests, max_time = 50){
   polygon(c(pred_vals, rev(pred_vals)), c(cred[2,], rev(cred[4,])),
           col = "#B97C7C", border = NA)
   lines(pred_vals, cred[3,], col = "#7C0000", lwd = 2.5)
+}
+
+## Code adapted from Andrew Parnell
+
+tpower <- function(x, t, p) {
+  # Truncated p-th power function
+  (x - t) ^ p * (x > t)
+}
+
+bbase <- function(x, xl = min(x), xr = max(x), nseg = 10, deg = 3) {
+  # Construct B-spline basis
+  dx <- (xr - xl) / nseg
+  knots <- seq(xl - deg * dx, xr + deg * dx, by = dx)
+  P <- outer(x, knots, tpower, deg)
+  n <- dim(P)[2]
+  D <- diff(diag(n), diff = deg + 1) / (gamma(deg + 1) * dx ^ deg)
+  B <- (-1) ^ (deg + 1) * P %*% t(D)
+  return(B)
 }
