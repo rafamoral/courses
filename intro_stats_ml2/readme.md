@@ -1,4 +1,4 @@
-## Introduction to Statistical Machine Learning using R
+## Introduction to Statistical Machine Learning using R (2024)
 
 We provide a comprehensive practical and theoretical introduction to statistical machine learning using R. We start by introducing the concepts of supervised and unsupervised learning. We firstly explore unsupervised learning, and introduce k-means and hierarchical clustering, as well as principal components analysis. We then move to supervised learning methods, and cover logistic regression and regularisation methods (such as ridge regression and the LASSO). After that, we introduce the k-nearest neighbours method, and classification and regression trees (CART). Finally, we explore extensions to CART, such as random forests and, if time allows, Bayesian additive regression trees (BART).
 
