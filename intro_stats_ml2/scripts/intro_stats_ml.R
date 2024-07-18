@@ -975,8 +975,15 @@ library(dbarts)
 Hitters_complete <- na.omit(Hitters)
 
 fit_bart <- bart2(log(Salary) ~ .,
-                  data = Hitters_complete)
+                  data = Hitters_complete,
+                  keepTrees = TRUE,
+                  power = 2,
+                  base = .95) # experiment to show more/less penalisation
 plot(fit_bart)
+dev.off()
+
+fit_bart$fit$plotTree(chainNum = 1, sampleNum = 500, treeNum = 1)
+fit_bart$fit$plotTree(chainNum = 1, sampleNum = 500, treeNum = 2)
 dev.off()
 
 hist(residuals(fit_bart))
@@ -987,6 +994,102 @@ qqline(residuals(fit_bart))
 
 library(hnp)
 hnp(residuals(fit_bart), scale = TRUE, half = FALSE, paint = TRUE)
+
+## tuning k
+## default k = 2
+cv_bart <- xbart(log(Salary) ~ .,
+                 data = Hitters_complete,
+                 k = c(1,2,3,4,5),
+                 seed = 2024)
+apply(cv_bart, 2, mean)
+
+cv_bart <- xbart(log(Salary) ~ .,
+                 data = Hitters_complete,
+                 k = seq(0.5, 3, .5),
+                 seed = 2024)
+apply(cv_bart, 2, mean)
+
+cv_bart <- xbart(log(Salary) ~ .,
+                 data = Hitters_complete,
+                 k = seq(0.5, 1.5, .1),
+                 seed = 2024)
+apply(cv_bart, 2, mean)
+
+set.seed(123)
+random_rows <- sample(1:nrow(Hitters_complete))
+
+Hitters_train <- Hitters_complete[random_rows[1:200], ]
+Hitters_test <- Hitters_complete[random_rows[201:263], ]
+
+fit_bart <- bart2(log(Salary) ~ .,
+                  data = Hitters_train,
+                  test = Hitters_test,
+                  k = 1.4, # experiment with different values of k
+                  verbose = FALSE) #
+
+sqrt(sum((fit_bart$yhat.test.mean - log(Hitters_test$Salary))^2/63))
+
+## modelling the mean using BART and decomposing the variance using random effects
+library(stan4bart)
+library(lme4)
+
+fit_stan4bart <- stan4bart(TICKS ~ bart(HEIGHT + YEAR) + (1 | BROOD) + (1 | LOCATION),
+                           data = grouseticks,
+                           bart_args = list(keepTrees = TRUE),
+                           verbose = -1)
+
+predictions <- stan4bart:::extract.stan4bartFit(object = fit_stan4bart, sample = "train", type = "ppd")
+predictions <- t(predictions)
+
+locations <- list()
+
+for(i in seq_along(unique(grouseticks$LOCATION))) {
+  locations[[i]] <- apply(as.matrix(predictions[, grouseticks$LOCATION == i]), 1, mean)
+}
+
+means <- lapply(locations, mean)
+lower <- lapply(locations, quantile, .025)
+upper <- lapply(locations, quantile, .975)
+
+tibble(location = seq_along(unique(grouseticks$LOCATION)),
+       lower = unlist(lower),
+       upper = unlist(upper),
+       estimate = unlist(means)) %>%
+  ggplot(aes(x = reorder(location, estimate), y = estimate)) +
+  theme_bw() +
+  geom_point() +
+  geom_segment(aes(x = reorder(location, estimate),
+                   xend = reorder(location, estimate),
+                   y = upper,
+                   yend = lower)) +
+  coord_flip()
+
+## allows for inference
+## probability that there are more ticks in location 4 than location 5
+sum(locations[[4]] > locations[[5]]) / nrow(predictions)
+
+## accounts for unseen future groups
+## non-independent data
+## more regularization
+## improved predictions
+
+# Boruta ------------------------------------------------------------------
+
+library(Boruta)
+
+boruta_fit <- Boruta(Salary ~ ., data = Hitters_complete)
+table(boruta_fit$finalDecision)
+boruta_fit$finalDecision[boruta_fit$finalDecision == "Confirmed"]
+
+# Neural Networks ---------------------------------------------------------
+
+library(nnet)
+library(selectnn)
+library(interpretnn)
+
+
+
+
 
 # GAMLSS ------------------------------------------------------------------
 
@@ -1031,14 +1134,31 @@ plot(fit_gamlss3)
 plot(getSmo(fit_gamlss3))
 text(getSmo(fit_gamlss3))
 
+fit_gamlss4 <- gamlss(log(Salary) ~ nn(~ CAtBat + CRuns + CHits + CRBI + CWalks) +
+                        AtBat + Hits + HmRun + RBI + Walks + Years +
+                        League + Division + Assists,
+                      sigma.formula = ~ nn(~ CAtBat + CRuns + CHits + CRBI + CWalks) +
+                        AtBat + Runs + Walks + Years +
+                        League + Division + PutOuts + Assists,
+                      data = Hitters_complete,
+                      control = gamlss.control(n.cyc = 50))
+wp(fit_gamlss4)
+plot(fit_gamlss4)
+plot(getSmo(fit_gamlss4))
+
+AIC(fit_gamlss)
+AIC(fit_gamlss2)
+AIC(fit_gamlss3)
+AIC(fit_gamlss4)
+
 ## comparing
-set.seed(2024)
+set.seed(12345)
 k <- 5
 fold <- sample(k, nrow(Hitters_complete), replace = TRUE)
 fsize <- table(fold)
 
-mse <- matrix(NA, nrow = k, ncol = 4)
-colnames(mse) <- c("CART" ,"Random Forests", "BART", "GAMLSS")
+mse <- matrix(NA, nrow = k, ncol = 5)
+colnames(mse) <- c("CART" ,"Random Forests", "BART", "GAMLSS_RF", "GAMLSS_NN")
 
 for(i in 1:k) {
   foldi <- Hitters_complete[fold == i,]
@@ -1053,16 +1173,20 @@ for(i in 1:k) {
   fit_bart <- bart2(log(Salary) ~ ., data = foldOther, keepTrees = TRUE)
   pred_bart <- colMeans(predict(fit_bart, foldi, type = "ev"))
   
-  fit_gamlss <- update(fit_gamlss3, data = foldOther)
-  pred_gamlss <- predict(fit_gamlss, newdata = foldi, what = "mu")
+  fit_gamlss_rf <- update(fit_gamlss3, data = foldOther)
+  pred_gamlss_rf <- predict(fit_gamlss3, newdata = foldi, what = "mu")
+  
+  fit_gamlss_nn <- update(fit_gamlss4, data = foldOther)
+  pred_gamlss_nn <- predict(fit_gamlss4, newdata = foldi, what = "mu")
   
   mse[i,1] <- mean((pred_cart - log(foldi$Salary))^2)
   mse[i,2] <- mean((pred_rf - log(foldi$Salary))^2)
   mse[i,3] <- mean((pred_bart - log(foldi$Salary))^2)
-  mse[i,4] <- mean((pred_gamlss - log(foldi$Salary))^2)
+  mse[i,4] <- mean((pred_gamlss_rf - log(foldi$Salary))^2)
+  mse[i,5] <- mean((pred_gamlss_nn - log(foldi$Salary))^2)
 }
 
 mse
 
 cv <- apply(mse, 2, function(x) weighted.mean(x, fsize))
-cv
+sort(cv)
