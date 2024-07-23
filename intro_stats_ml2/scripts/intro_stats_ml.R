@@ -3,7 +3,7 @@ library(tidyverse)
 # Introduction: Example datasets ------------------------------------------
 
 ## Wage data
-wage_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml/data/wage.csv")
+wage_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml2/data/wage.csv")
 
 wage_df %>%
   ggplot(aes(x = age, y = wage)) +
@@ -21,7 +21,7 @@ wage_df %>%
   geom_boxplot()
 
 ## Stock market data
-stock_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml/data/stock_market.csv")
+stock_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml2/data/stock_market.csv")
 
 stock_df_long <- stock_df %>%
   mutate(id = 1:nrow(stock_df)) %>%
@@ -96,7 +96,7 @@ cor(x)
 cor(x, method = "spearman")
 
 ## Example: EuroStat
-educ_df <- read.table("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml/data/eurostat.txt",
+educ_df <- read.table("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml2/data/eurostat.txt",
                       row.names = 1, header = TRUE)
 educ_df <- educ_df[, -19]
 educ_df <- t(educ_df)
@@ -131,7 +131,7 @@ stars(educ_df[h$order,], nrow = 3,
       col.stars = cutree(h,4)[h$order] + 1)
 
 ## Example: Music data
-music <- read.csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml/data/music.csv", stringsAsFactors = TRUE)
+music <- read.csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml2/data/music.csv", stringsAsFactors = TRUE)
 music.feat <- music[, 4:8]
 pairs(music.feat, col = music$Artist)
 
@@ -202,7 +202,7 @@ biplot(p, scale = 0, cex = c(.5,.5), cex.axis = .5)
 plot(p)
 summary(p)
 
-source("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml/scripts/screeplot.R")
+source("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml2/scripts/screeplot.R")
 screeplot(p)
 
 # remotes::install_github("vqv/ggbiplot")
@@ -215,7 +215,7 @@ ggbiplot(p,
   theme_bw()
 
 ## Example: Olympic Decathlon Data
-olympic <- read.table("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml/data/olympic88.txt",
+olympic <- read.table("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml2/data/olympic88.txt",
                       header = TRUE, check.names = FALSE)
 head(olympic)
 pairs(olympic, gap = .2, cex = .5)
@@ -310,7 +310,7 @@ pred <- factor(ifelse(prob < .5, "No", "Yes"))
 table(Default$default, pred)
 
 ## ROC curve
-source("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml/scripts/calcERR.R")
+source("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml2/scripts/calcERR.R")
 e <- calcERR(prob, Default$default,
              thresh = seq(0, 1, length.out = 500))
 
@@ -437,10 +437,10 @@ plot.roc(fit_logistic$pred$obs,
 # Regression --------------------------------------------------------------
 
 ## Bodyfat data
-bfat <- read.table("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml/data/bodyfat.txt", header = TRUE)
+bfat <- read.table("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml2/data/bodyfat.txt", header = TRUE)
 head(bfat)
 
-source("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml/scripts/opairs.R")
+source("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml2/scripts/opairs.R")
 opairs(bfat)
 
 f <- lm(bfat ~ ., data = bfat)
@@ -808,7 +808,7 @@ for(i in my_seq) {
 # GAMs --------------------------------------------------------------------
 
 ## Salary data
-sal <- read.table("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml/data/salary.txt",
+sal <- read.table("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml2/data/salary.txt",
                   header = TRUE)
 sal$gender <- factor(ifelse(sal$gender == 1, "F", "M"))
 head(sal)
@@ -945,7 +945,7 @@ fit_rf <- train(type ~ .,
                 trControl = fit_control,
                 metric = "ROC")
 
-load("intro_stats_ml/scripts/cv_rf.RData")
+load("intro_stats_ml2/scripts/cv_rf.RData")
 fit_rf
 plot(varImp(fit_rf))
 
@@ -1087,9 +1087,82 @@ library(nnet)
 library(selectnn)
 library(interpretnn)
 
+## loading insurance data
+insurance_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_stats_ml2/data/insurance.csv")
+insurance_df <- insurance_df %>%
+  mutate(sex = as.factor(sex),
+         smoker = as.factor(smoker),
+         region = as.factor(region),
+         charges = log(charges),
+         age = scale(age),
+         bmi = scale(bmi))
 
+fit_nn <- nnet(charges ~ .,
+               size = 2,            ## number of units in hidden layer
+               linout = TRUE,       ## response is numeric
+               data = insurance_df,
+               maxit = 2000,
+               decay = .01)
+summary(fit_nn)
+plot(insurance_df$charges, predict(fit_nn))
 
+fit_nn2 <- selectnn(charges ~ .,
+                    data = insurance_df,
+                    Q = 8,
+                    n_init = 5,
+                    decay = .01)
+fit_nn2
+summary(fit_nn2)
 
+final_nn <- nn_fit(x = fit_nn2$X,
+                   y = insurance_df$charges,
+                   q = 2,
+                   n_init = 10,
+                   maxit = 2000,
+                   lambda = 0.01)
+int_nn <- interpretnn(final_nn)
+plotnn(int_nn)
+summary(int_nn)
+
+plot(int_nn, conf_int = TRUE, which = c(1, 4))
+
+## Pima Indians dataset
+data(Pima.tr, package = "MASS")
+?Pima.tr
+
+pima_df <- as_tibble(Pima.tr)
+
+fit_nn <- nnet(type ~ .,
+               size = 2,            
+               linout = FALSE,       
+               data = pima_df,
+               maxit = 2000,
+               decay = .01)
+summary(fit_nn)
+table(pima_df$type, predict(fit_nn) > .5)
+
+library(caret)
+confusionMatrix(pima_df$type, factor(ifelse(predict(fit_nn) > .5, "Yes", "No")))
+
+fit_nn2 <- selectnn(type ~ .,
+                    data = pima_df,
+                    Q = 8,
+                    n_init = 5,
+                    decay = .01)
+fit_nn2
+summary(fit_nn2)
+
+final_nn <- nn_fit(x = fit_nn2$X,
+                   y = as.numeric(pima_df$type),
+                   q = 1,
+                   n_init = 10,
+                   maxit = 2000,
+                   lambda = 0.01)
+int_nn <- interpretnn(final_nn)
+plotnn(int_nn)
+summary(int_nn)
+
+plot(int_nn, conf_int = TRUE, which = c(1, 4))
 
 # GAMLSS ------------------------------------------------------------------
 
