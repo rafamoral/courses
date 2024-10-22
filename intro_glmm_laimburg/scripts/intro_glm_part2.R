@@ -84,86 +84,62 @@ contamination_df %>%
   ggplot(aes(x = doy, y = contamination)) +
   theme_bw() +
   geom_point(alpha = .5) +
-  geom_smooth(se = FALSE) +
   facet_grid(overseed ~ rain)
 
 ## fitting Poisson models
-fit2 <- glm(gp_visits ~ sex + age,
+fit2 <- glm(contamination ~ doy + overseed,
             family = poisson,
-            data = doctor_df)
+            data = contamination_df)
 summary(fit2)
 estimates <- coef(fit2)
 
-## What is the rate (aka lambda, aka mean) of the Poisson distribution for a female aged 50?
+## What is the rate (aka lambda, aka mean) of the Poisson distribution in an
+## overseeded plot for day 100?
 
-## log of the rate for a female aged 50 is....
-log_rate_female_50 <- estimates[1] + estimates[2] * 1 + estimates[3] * 50
+## log of the rate for an overseeded plot for day 100 is...
+log_rate_overseeded_100 <- estimates[1] + estimates[2] * 100 + estimates[3]
 
-## the rate for a female aged 50 is....
-rate_female_50 <- exp(log_rate_female_50)
-
-## draw samples from the Poisson dist whose rate is rate_female_50
-rpois(1000, lambda = rate_female_50)
-table(rpois(1000, lambda = rate_female_50))
-round(dpois(0:5, lambda = rate_female_50), 3)
+## the rate for an overseeded plot for day 100 is...
+rate_overseeded_100 <- exp(log_rate_overseeded_100)
 
 ## What is the rate (aka lambda, aka mean) of the Poisson distribution
-## for a *male* aged 50?
+## for a non-overseeded plot on day 100?
 
-## log of the rate for a male aged 50 is....
-log_rate_male_50 <- estimates[1] + estimates[2] * 0 + estimates[3] * 50
+## log of the rate
+log_rate_nonoverseeded_100 <- estimates[1] + estimates[2] * 100
 
-## the rate for a male aged 50 is....
-rate_male_50 <- exp(log_rate_male_50)
+## the rate
+rate_nonoverseeded_100 <- exp(log_rate_nonoverseeded_100)
 
-## draw samples from the Poisson dist whose rate is rate_male_50
-rpois(1000, lambda = rate_male_50)
-table(rpois(1000, lambda = rate_male_50))
-round(dpois(0:5, lambda = rate_male_50), 3)
+log_rate_overseeded_100 - log_rate_nonoverseeded_100 ## same as estimates[3]
 
-log_rate_female_50 - log_rate_male_50 ## same as estimates[2]
+rate_overseeded_100 / rate_nonoverseeded_100
 
-c(rate_female_50, rate_male_50)
-rate_female_50 / rate_male_50
-
-exp(estimates[2])
+exp(estimates[3])
 
 summary(fit2)
 confint.default(fit2)
 
-## 95% CI on the factor by which the rate change as we change from men to women
-exp(confint.default(fit2, parm = "sexfemale"))
-
-## predicted curves
-newdata <- expand.grid(age = seq(19, 72, length = 200),
-                       sex = c("male","female"))
-add_predictions(data = newdata, model = fit2, type = "response", var = "gp_visits") %>%
-  ggplot(aes(x = age, y = gp_visits)) +
-  theme_bw() +
-  geom_jitter(data = doctor_df,
-              height = .15, width = .005, alpha = .1) +
-  geom_line(col = 2, lwd = 1) +
-  facet_wrap(~ sex) +
-  ylab("Number of GP visits") +
-  xlab("Age")
+## 95% CI on the factor by which the rate change as we change from nonoverseeded to overseeded
+exp(confint.default(fit2, parm = "overseed"))
 
 ## model comparison
-fit3 <- glm(gp_visits ~ sex + age + insurance,
+fit3 <- glm(contamination ~ doy + overseed + rain,
             family = poisson,
-            data = doctor_df)
+            data = contamination_df)
 deviance(fit2)
 deviance(fit3)
 
 deviance(fit2) - deviance(fit3)
 
-pchisq(deviance(fit2) - deviance(fit3), df = 3, lower.tail = FALSE)
+pchisq(deviance(fit2) - deviance(fit3), df = 1, lower.tail = FALSE)
 
 anova(fit2, fit3, test = 'Chisq')
 
 ## note
 ## the deviance is calculated as
 ## 2 * (logLik(saturated model) - logLik(current model))
-2*(sum(dpois(doctor_df$gp_visits, doctor_df$gp_visits, log = TRUE)) - logLik(fit3))
+2*(sum(dpois(contamination_df$contamination, contamination_df$contamination, log = TRUE)) - logLik(fit3))
 deviance(fit3)
 - 2 * logLik(fit3)
 ## for the Bernoulli model, logLik(saturated model) = 0, therefore D = - 2 * logLik(current model)
