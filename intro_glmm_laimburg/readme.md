@@ -1,0 +1,19 @@
+## Introduction to Generalized Linear Models using R
+
+This course provides a comprehensive practical and theoretical introduction to generalized linear models using R. Generalized linear models are generalizations of linear regression models for situations where the outcome variable is, for example, a binary, or ordinal, or count variable, etc. The specific models we cover include binary, binomial, and categorical logistic regression, Poisson and negative binomial regression for count variables, as well as extensions for overdispersed and zero-inflated data. We begin by providing a brief overview of the normal general linear model. Understanding this model is vital for the proper understanding of how it is generalized in generalized linear models. Next, we introduce the widely used binary logistic regression model, which is is a regression model for when the outcome variable is binary. Next, we cover the binomial logistic regression, and the multinomial case, which is for modelling outcomes variables that are polychotomous, i.e., have more than two categorically distinct values. We will then cover Poisson regression, which is widely used for modelling outcome variables that are counts (i.e the number of times something has happened). We then cover extensions to accommodate overdispersion, starting with the quasi-likelihood approach, then covering the negative binomial and beta-binomial models for counts and discrete proportions, respectively. Finally, we will cover zero-inflated Poisson and negative binomial models, which are for count data with excessive numbers of zero observations.
+ 
+## Topics Covered
+
+**Topic 1:** The general linear model. We begin by providing an overview of the normal, as in normal distribution, general linear model, including using categorical predictor variables. Although this model is not the focus of the course, it is the foundation on which generalized linear models are based and so must be understood to understand generalized linear models.
+
+**Topic 2:** Binary logistic regression. Our first generalized linear model is the binary logistic regression model, for use when modelling binary outcome data. We will present the assumed theoretical model behind logistic regression, implement it using R’s glm, and then show how to interpret its results, perform predictions, and (nested) model comparisons.
+
+**Topic 3:** Binomial logistic regression. Here, we show how the binary logistic regresion can be extended to deal with data on discrete proportions. We will also present alternative link functions to the logit, such as the probit and complementary log-log links.
+
+**Topic 4:** Categorical logistic regression. Categorical logistic regression, also known as multinomial logistic regression, is for modelling polychotomous data, i.e. data taking more than two categorically distinct values. Like ordinal logistic regression, categorical logistic regression is also based on an extension of the binary logistic regression case.
+
+**Topic 5:** Poisson regression. Poisson regression is a widely used technique for modelling count data, i.e., data where the variable denotes the number of times an event has occurred.
+
+**Topic 6:** Overdispersion models. The quasi-likelihood approach for both the Poisson and binomial models. Negative binomial regression. The negative binomial model is, like the Poisson regression model, used for unbounded count data, but it is less restrictive than Poisson regression, specifically by dealing with overdispersed data. Beta-binomial regression. The beta-binomial model is an overdispersed alternative to the binomial.
+
+**Topic 7:** Zero inflated models. Zero inflated count data is where there are excessive numbers of zero counts that can be modelled using either a Poisson or negative binomial model. Zero inflated Poisson or negative binomial models are types of latent variable models.
