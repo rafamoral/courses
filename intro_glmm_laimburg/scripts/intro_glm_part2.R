@@ -75,16 +75,17 @@ x %>%
 
 ## contamination dataset
 contamination_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_glmm_laimburg/data/05_milk_contamination_data.csv")
+contamination_df <- contamination_df %>%
+  mutate(obs_ID = as.factor(obs_ID),
+         farmcode = as.factor(farmcode))
 
 ## exploratory plot
-doctor_df %>%
-  ggplot(aes(x = age, y = gp_visits)) +
+contamination_df %>%
+  ggplot(aes(x = doy, y = contamination)) +
   theme_bw() +
-  geom_jitter(height = .15, width = .005, alpha = .1) +
+  geom_point(alpha = .5) +
   geom_smooth(se = FALSE) +
-  facet_wrap(~ sex) +
-  ylab("Number of GP visits") +
-  xlab("Age")
+  facet_grid(overseed ~ rain)
 
 ## fitting Poisson models
 fit2 <- glm(gp_visits ~ sex + age,
