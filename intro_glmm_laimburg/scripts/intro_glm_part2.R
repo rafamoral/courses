@@ -73,10 +73,8 @@ x %>%
   geom_segment(aes(x = x, xend = x, y = 0, yend = `P(x)`), lwd = .3) +
   facet_wrap(~ distribution)
 
-## loading number of GP visits dataset
-doctor_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_glm/data/doctor_visits.csv")
-doctor_df$sex <- factor(doctor_df$sex, labels = c("male","female"))
-doctor_df$age <- doctor_df$age * 100
+## contamination dataset
+contamination_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_glmm_laimburg/data/05_milk_contamination_data.csv")
 
 ## exploratory plot
 doctor_df %>%
@@ -172,6 +170,7 @@ deviance(fit3)
 ## although inconsistent, this doesn't change tests based on differences of deviances
 ## because the logLik of the saturated model is a constant that is cancelled out
 
+## extra: example of a Poisson GLM analysis using an offset term
 ## loading the insurance dataset (offset example)
 insurance_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_glm/data/insurance.csv")
 insurance_df$District <- as.factor(insurance_df$District)

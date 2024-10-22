@@ -70,5 +70,6 @@ The main packages that are contained within the
 
 We need a number of extra R packages, which can be installed individually via the R package installer dialog, or else with the following command.
 ```r
-install.packages(c("hnp", "ordinal", "nnet", "gamlss", "pscl", "ggpubr"))
+install.packages(c("hnp", "ordinal", "nnet", "gamlss", "pscl", "ggpubr",
+                   "lme4", "mvtnorm", "lmerTest", "sjPlot"))
 ```
