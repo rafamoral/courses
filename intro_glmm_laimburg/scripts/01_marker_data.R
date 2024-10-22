@@ -3,7 +3,7 @@ library(readxl)
 library(hnp)
 library(gamlss)
 
-marker_df <- read_xlsx("01_marker_data.xlsx")
+marker_df <- read_csv("../data/01_marker_data.csv")
 marker_df <- marker_df %>%
   mutate(milk_type = `Milk type`) %>%
   filter(milk_type != "H") %>%

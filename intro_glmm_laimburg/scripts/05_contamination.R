@@ -5,7 +5,7 @@ library(gamlss)
 library(lme4)
 library(lmerTest)
 
-contamination_df <- read_xlsx("05_milk_contamination_data.xlsx")
+contamination_df <- read_csv("../data/05_milk_contamination_data.csv")
 contamination_df <- contamination_df %>%
   mutate(obs_ID = as.factor(obs_ID),
          farmcode = as.factor(farmcode))

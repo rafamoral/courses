@@ -5,7 +5,7 @@ library(gamlss)
 library(lme4)
 library(lmerTest)
 
-septoria_df <- read_excel("02_Septoria_data.xls")
+septoria_df <- read_csv("../data/02_Septoria_data.csv")
 septoria_df <- septoria_df %>%
   mutate(across(where(is.character), as.factor),
          Block = as.factor(Block))
