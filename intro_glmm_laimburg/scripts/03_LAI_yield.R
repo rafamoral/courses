@@ -7,7 +7,7 @@ library(lmerTest)
 library(mgcv)
 library(gratia)
 
-lai_df <- read_csv("../data/03_LAI-yield_data.csv")
+lai_df <- read_csv("../data/03_LAI-yield_data.csv")[,1:10]
 lai_df <- lai_df %>%
   mutate(parcel = as.factor(parcel),
          replicatewithinparcel = as.factor(replicatewithinparcel),

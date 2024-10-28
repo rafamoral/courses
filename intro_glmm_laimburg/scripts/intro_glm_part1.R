@@ -38,7 +38,7 @@ confint(fit2)
 ## The Bernoulli GLM -----------------------------------------------------------
 
 ## loading the affairs data
-affairs_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_glm/data/affairs.csv")
+affairs_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/refs/heads/main/intro_glmm_laimburg/data/affairs.csv")
 affairs_df
 
 ## affairs: number of affairs in the past year
@@ -91,7 +91,7 @@ fit3 <- glm(had_affair ~ yearsmarried,
             data = affairs_df)
 summary(fit3)$coefficients
 
-estimates <- coef(fit3)
+estimates <- coef(fit6)
 
 ## what is the log odds of having an affair for a person with 10 years of marriage
 estimates[1] + estimates[2] * 10

@@ -1,3 +1,13 @@
+# Experimental question: Effect of preceding crop,
+# wheat cultivar, dose splitting and fertilisation level
+# on the infection with Septoria.
+# Design: split-plot design with four blocks.
+# Within each block, the preceding crop is the main plot;
+# wheat cultivar, dose splitting and fertilisation level
+# (all treated as categorial) are randomised within the
+# preceding crop.
+
+
 library(tidyverse)
 library(readxl)
 library(hnp)

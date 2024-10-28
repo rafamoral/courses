@@ -18,6 +18,7 @@ contamination_df %>%
   geom_smooth(se = FALSE) +
   facet_grid(overseed + rain ~ stubbleheight + springfym)
 
+## as "continuous"
 fit1 <- lmer(contamination ~ (doy | farmcode) +
                (doy + rain + stubbleheight + springfym + overseed) ^ 3,
              data = contamination_df)
@@ -25,6 +26,7 @@ summary(fit1)
 anova(fit1)
 hnp(fit1, verb = TRUE)
 
+## as a count variable
 fit2 <- gamlss(contamination ~ random(farmcode) +
                  (doy + rain + stubbleheight + springfym + overseed) ^ 3,
                sigma.formula = ~ (doy + rain + stubbleheight + springfym + overseed) ^ 3,
