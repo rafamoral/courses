@@ -102,8 +102,8 @@ educ_df <- educ_df[, -19]
 educ_df <- t(educ_df)
 head(educ_df)
 
-library(PairViz)
-pcp(educ_df, lwd = 2, scale = FALSE, col = 1:18)
+library(MASS)
+parcoord(educ_df, lwd = 2, col = 1:18)
 axis(2)
 
 stars(educ_df, nrow = 3, col.stars = 1:18)
@@ -124,8 +124,7 @@ plot(d2)
 
 cutree(h, 4)
 
-pcp(educ_df, lwd = 2, scale = FALSE, col = cutree(h,4) + 1)
-axis(2)
+parcoord(educ_df, lwd = 2, col = cutree(h,4) + 1)
 
 stars(educ_df[h$order,], nrow = 3,
       col.stars = cutree(h,4)[h$order] + 1)
@@ -135,7 +134,7 @@ music <- read.csv("https://raw.githubusercontent.com/rafamoral/courses/main/intr
 music.feat <- music[, 4:8]
 pairs(music.feat, col = music$Artist)
 
-pcp(music.feat, col = music$Type)
+parcoord(music.feat, col = music$Type)
 
 d <- dist(music.feat, "euclidean")
 h <- hclust(d, "single")
@@ -160,7 +159,7 @@ tanglegram(dl, sort = TRUE, common_subtrees_color_lines = FALSE,
            highlight_distinct_edges = FALSE, highlight_branches_lwd = FALSE)
 
 pairs(music.feat, col = labl.Ave + 1)
-pcp(music.feat, col = labl.Ave + 1)
+parcoord(music.feat, col = labl.Ave + 1)
 
 ## k-means example: NCI60 data
 
@@ -457,7 +456,7 @@ fit_rf <- train(type ~ .,
                 trControl = fit_control,
                 metric = "ROC")
 
-load("intro_stats_ml2/scripts/cv_rf.RData")
+load("cv_rf.RData")
 fit_rf
 plot(varImp(fit_rf))
 
@@ -639,22 +638,9 @@ plot(fit_gamlss3)
 plot(getSmo(fit_gamlss3))
 text(getSmo(fit_gamlss3))
 
-fit_gamlss4 <- gamlss(log(Salary) ~ nn(~ CAtBat + CRuns + CHits + CRBI + CWalks) +
-                        AtBat + Hits + HmRun + RBI + Walks + Years +
-                        League + Division + Assists,
-                      sigma.formula = ~ nn(~ CAtBat + CRuns + CHits + CRBI + CWalks) +
-                        AtBat + Runs + Walks + Years +
-                        League + Division + PutOuts + Assists,
-                      data = Hitters_complete,
-                      control = gamlss.control(n.cyc = 50))
-wp(fit_gamlss4)
-plot(fit_gamlss4)
-plot(getSmo(fit_gamlss4))
-
 AIC(fit_gamlss)
 AIC(fit_gamlss2)
 AIC(fit_gamlss3)
-AIC(fit_gamlss4)
 
 ## comparing
 set.seed(12345)
@@ -662,8 +648,8 @@ k <- 5
 fold <- sample(k, nrow(Hitters_complete), replace = TRUE)
 fsize <- table(fold)
 
-mse <- matrix(NA, nrow = k, ncol = 5)
-colnames(mse) <- c("CART" ,"Random Forests", "BART", "GAMLSS_RF", "GAMLSS_NN")
+mse <- matrix(NA, nrow = k, ncol = 4)
+colnames(mse) <- c("CART" ,"Random Forests", "BART", "GAMLSS_RF")
 
 for(i in 1:k) {
   foldi <- Hitters_complete[fold == i,]
@@ -681,14 +667,10 @@ for(i in 1:k) {
   fit_gamlss_rf <- update(fit_gamlss3, data = foldOther)
   pred_gamlss_rf <- predict(fit_gamlss3, newdata = foldi, what = "mu")
   
-  fit_gamlss_nn <- update(fit_gamlss4, data = foldOther)
-  pred_gamlss_nn <- predict(fit_gamlss4, newdata = foldi, what = "mu")
-  
   mse[i,1] <- mean((pred_cart - log(foldi$Salary))^2)
   mse[i,2] <- mean((pred_rf - log(foldi$Salary))^2)
   mse[i,3] <- mean((pred_bart - log(foldi$Salary))^2)
   mse[i,4] <- mean((pred_gamlss_rf - log(foldi$Salary))^2)
-  mse[i,5] <- mean((pred_gamlss_nn - log(foldi$Salary))^2)
 }
 
 mse
