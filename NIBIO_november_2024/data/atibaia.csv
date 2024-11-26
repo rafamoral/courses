@@ -18,7 +18,7 @@ area,treatment,thrips,beetles
 1,control,13,9
 1,control,6,1
 2,metarhizium,11,9
-2,metarhizium,15,0
+2,metarhizium,,0
 2,metarhizium,11,2
 2,metarhizium,4,0
 2,metarhizium,3,2
@@ -36,7 +36,7 @@ area,treatment,thrips,beetles
 2,control,3,2
 2,control,4,4
 3,metarhizium,15,1
-3,metarhizium,21,1
+3,metarhizium,,
 3,metarhizium,32,0
 3,metarhizium,9,5
 3,beauveria,5,1
