@@ -1,6 +1,6 @@
-Subject,Cued_Neg,Cued_Neu,Cued_Pos,Free_Neg,Free_Neu,Free_Pos
-Faye,15,16,14,13,13,12
-Jason,4,9,10,6,7,9
-Jim,7,9,10,8,9,5
-Ron,17,18,20,12,14,15
-Victor,16,13,14,12,13,14
+greenhouse,january_temp,january_RH,january_co2,february_temp,february_RH,february_co2
+1,15,80,420,13,88,350
+2,4,88,390,6,95,360
+3,7,90,380,8,87,380
+4,17,93,410,12,85,400
+5,16,83,400,12,90,390
