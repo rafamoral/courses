@@ -488,42 +488,42 @@ inner_join(Df_4, Df_5, by = c("x" = "a"))
 
 ## Reshaping with pivots -------------------------------------------------------
 
-## experiment to recall negative, neutral, or positive memories
-recall_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/data_wrangling/data/repeated_measured_a.csv")
+## environmental variables measured in a greenhouse
+greenhouse_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/NIBIO_november_2024/data/greenhouse.csv")
 
-recall_df_long <- recall_df %>%
-  pivot_longer(- Subject,
-               names_to = "condition",
-               values_to = "memory")
+greenhouse_df_long <- greenhouse_df %>%
+  pivot_longer(- greenhouse,
+               names_to = "measurement",
+               values_to = "value")
 
-recall_df_long %>%
-  pivot_wider(names_from = condition,
-              values_from = memory)
+greenhouse_df_long %>%
+  pivot_wider(names_from = measurement,
+              values_from = value)
 
-recall_df_b <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/data_wrangling/data/repeated_measured_b.csv")
+greenhouse_df_b <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/NIBIO_november_2024/data/greenhouse_b.csv")
 
 ## this pipeline 
-recall_df_b %>%
-  pivot_longer(- Subject,
-               names_to = "condition",
-               values_to = "memory") %>% 
-  separate(col = condition, 
-           into = c("cue", "emotion"),
+greenhouse_df_b %>%
+  pivot_longer(- greenhouse,
+               names_to = "measurement",
+               values_to = "value") %>% 
+  separate(col = measurement, 
+           into = c("month", "environmental_variable"),
            sep = "_")
 
 ## is equivalent to this one command
-recall_df_b %>%
-  pivot_longer(- Subject,
-               names_to = c("cue", "emotion"),
+greenhouse_df_b %>%
+  pivot_longer(- greenhouse,
+               names_to = c("month", "environmental_variable"),
                names_sep = "_",
-               values_to = "memory")
+               values_to = "value")
 
 ## and also it is equivalent to this
-recall_df_b %>%
-  pivot_longer(- Subject,
-               names_to = c("cue", "emotion"),
+greenhouse_df_b %>%
+  pivot_longer(- greenhouse,
+               names_to = c("month", "environmental_variable"),
                names_pattern = "(.*)_(.*)",
-               values_to = "memory")
+               values_to = "value")
 ## . = any character
 ## * = any number of characters
 ## (.*) = any number of characters of any kind
