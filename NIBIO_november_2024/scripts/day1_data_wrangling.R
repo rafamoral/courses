@@ -398,32 +398,39 @@ blp_df %>%
 
 ## Summary statistics with summarise -------------------------------------------
 
-summarise(blp_df, mean(rt, na.rm = TRUE))
+atibaia_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/NIBIO_november_2024/data/atibaia.csv")
 
-blp_df %>% 
-  drop_na() %>% 
-  summarise(avg = mean(rt),
-            med_rt_raw = median(rt.raw))
+summarise(atibaia_df, mean(thrips, na.rm = TRUE))
 
-blp_df %>% 
-  mutate(fast_rt = rt <= 500) %>%  
-  drop_na() %>% 
-  group_by(lex, fast_rt) %>% 
-  summarise(avg = mean(rt))
+atibaia_df %>%
+  drop_na() %>%
+  summarise(avg_thrips = mean(thrips),
+            avg_beetles = mean(beetles))
 
-blp_df %>% 
+atibaia_df %>% 
+  mutate(high_thrips = thrips > 30) %>%  
   drop_na() %>% 
-  group_by(lex) %>% 
-  summarise(across(rt:rt.raw, median))
+  group_by(area, treatment) %>% 
+  summarise(avg = mean(beetles))
 
-blp_df %>% 
+atibaia_df %>% 
   drop_na() %>% 
-  group_by(lex) %>% 
-  summarise(across(rt:rt.raw, list(median = median, mad = mad)))
+  group_by(treatment) %>% 
+  summarise(across(thrips:beetles, median))
 
-blp_df %>% 
+atibaia_df %>% 
+  mutate(area = factor(area)) %>%
   drop_na() %>% 
-  summarise(across(rt:rt.raw, list(median = median, mad = mad)))
+  group_by(treatment) %>% 
+  summarise(across(where(is.numeric), median))
+
+se <- function(x) sd(x) / sqrt(length(x))
+
+atibaia_df %>% 
+  mutate(area = factor(area)) %>%
+  drop_na() %>% 
+  group_by(treatment) %>% 
+  summarise(across(where(is.numeric), list(mean = mean, se = se)))
 
 ## Merging data frames ---------------------------------------------------------
 
