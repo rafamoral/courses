@@ -8,15 +8,15 @@ small_check <- function(model){
 }
 
 # Call marginaleffects::plot_predictions to inspect model fits
-plot_fcs <- function(model, n_ahead = 0){
+plot_fcs <- function(model, n_ahead = 0, data){
   p <- plot_predictions(model, 
-                        condition = list(time = 1:(max(dat$time) + n_ahead)),
+                        condition = list(time = 1:(max(data$time) + n_ahead)),
                         type = 'response',
                         points = 0.5)
   
   if(n_ahead > 0){
     p <- p + 
-      geom_vline(xintercept = max(dat$time), 
+      geom_vline(xintercept = max(data$time), 
                  linetype = 'dashed')
   }
   p

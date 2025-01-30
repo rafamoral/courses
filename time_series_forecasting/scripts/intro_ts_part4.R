@@ -41,6 +41,8 @@ library(mgcv)
 fit4 <- gam(salary ~ s(pexp), data = sal)
 summary(fit4)
 plot(fit4)
+
+library(gratia)
 draw(fit4)
 appraise(fit4, method = "simulate")
 
@@ -72,26 +74,26 @@ fit5 <- gam(count ~ s(time, k = 6),
             method = "REML")
 small_check(fit5)
 library(marginaleffects)
-plot_fcs(fit5) + theme_bw()
+plot_fcs(fit5, data = campy_df) + theme_bw()
 
 fit6 <- gam(count ~ s(time, k = 20),
             data = campy_df,
             family = poisson,
             method = "REML")
 small_check(fit6)
-plot_fcs(fit6) + theme_bw()
+plot_fcs(fit6, data = campy_df) + theme_bw()
 
 fit7 <- gam(count ~ s(time, k = 50),
             data = campy_df,
             family = poisson,
             method = "REML")
 small_check(fit7)
-plot_fcs(fit7) + theme_bw()
+plot_fcs(fit7, data = campy_df) + theme_bw()
 
 ## forecasting
-plot_fcs(fit5, n_ahead = 10) + theme_bw()
-plot_fcs(fit6, n_ahead = 10) + theme_bw()
-plot_fcs(fit7, n_ahead = 10) + theme_bw()
+plot_fcs(fit5, n_ahead = 10, data = campy_df) + theme_bw()
+plot_fcs(fit6, n_ahead = 10, data = campy_df) + theme_bw()
+plot_fcs(fit7, n_ahead = 10, data = campy_df) + theme_bw()
 
 par(mfrow = c(1,2))
 acf(residuals(fit5)); pacf(residuals(fit5))
@@ -106,7 +108,7 @@ fit8 <- bam(count ~ s(time, k = 50),
             rho = 0.6,
             discrete = TRUE)
 small_check(fit8)
-plot_fcs(fit8, n_ahead = 10) + theme_bw()
+plot_fcs(fit8, n_ahead = 10, data = campy_df) + theme_bw()
 par(mfrow = c(1,2))
 acf(residuals(fit8)); pacf(residuals(fit8))
 
@@ -231,7 +233,7 @@ queensland_bulls %>%
   geom_line(aes(y = pred), col = 2)
 
 AIC(fit4$lme)
-AIC(fit5$lme) ## improvement with ARMA(2,2) structure
+AIC(fit5$lme) ## improvement with ARMA(2,2) structure, but convergence issue
 
 ## comparing performances on test set
 
