@@ -6,6 +6,9 @@ library(tidyverse)
 grazing_df <- read_csv("https://raw.githubusercontent.com/rafamoral/courses/main/intro_glm/data/grazing.csv")
 grazing_df
 
+## pre-grazing conditions: 95% and 100% light interception during regrowth
+## post-grazing conditions: two heights
+
 library(nnet)
 
 fit1 <- multinom(resp ~ months, data = grazing_df)
