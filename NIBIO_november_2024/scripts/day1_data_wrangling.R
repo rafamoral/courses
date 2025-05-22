@@ -33,6 +33,10 @@ print(blp_df, n = Inf)
 ## glimpsing
 glimpse(blp_df)
 
+`|>`  # base R pipe
+`%>%` # magrittr pipe
+
+
 ## look at the data as a base R data frame
 blp_df_base <- read.csv("https://raw.githubusercontent.com/rafamoral/courses/main/data_wrangling/data/blp-trials-short.txt")
 blp_df_base
@@ -51,6 +55,13 @@ blp_df_base
 ## arrange: sorting rows
 
 ## Selecting columns with select
+blp_df %>%
+  select(participant, lex, resp, rt)
+
+blp_df %>%
+  select(lex : rt)
+
+
 select(blp_df, participant, lex, resp, rt)
 
 ## save the returned data frame as blp_df2
@@ -59,10 +70,11 @@ blp_df2 <- select(blp_df, participant, lex, resp, rt)
 #blp_df <- select(blp_df, participant, lex, resp, rt)
 
 ## select and rename at the same time
-select(blp_df, participant, lex, resp, reaction_time = rt)
+blp_df %>%
+  select(participant, lex, resp, reaction_time = rt)
 ## base R
-#blp_df <- blp_df[, c("participant", "lex", "resp", "rt")]
-#names(blp_df)[5] <- "reaction_time"
+blp_df <- blp_df[, c("participant", "lex", "resp", "rt")]
+names(blp_df)[5] <- "reaction_time"
 
 ## select by index
 select(blp_df, 1, 2, 7)
